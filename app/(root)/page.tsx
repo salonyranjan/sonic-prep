@@ -22,30 +22,35 @@ async function Home() {
   const hasUpcomingInterviews = allInterview?.length! > 0;
 
   return (
-    <>
+    <div className="flex flex-col gap-12">
+      {/* Hero Banner Section */}
       <section className="card-cta">
         <div className="flex flex-col gap-6 max-w-lg">
-          <h2>Get Interview-Ready with AI-Powered Practice & Feedback</h2>
-          <p className="text-lg">
-            Practice real interview questions & get instant feedback
+          <h2 className="text-3xl md:text-4xl font-bold leading-tight">
+            Master Your Next Interview with Sonic-Speed AI Feedback
+          </h2>
+          <p className="text-lg opacity-90">
+            Practice real-time voice interviews and get instant technical and behavioral analysis.
           </p>
 
-          <Button asChild className="btn-primary max-sm:w-full">
+          <Button asChild className="btn-primary max-sm:w-full font-semibold">
             <Link href="/interview">Start an Interview</Link>
           </Button>
         </div>
 
         <Image
           src="/robot.png"
-          alt="robo-dude"
+          alt="SonicPrep AI Assistant"
           width={400}
           height={400}
-          className="max-sm:hidden"
+          priority // Fixes LCP build warning
+          className="max-sm:hidden w-auto h-auto object-contain" // Fixes aspect ratio build warning
         />
       </section>
 
-      <section className="flex flex-col gap-6 mt-8">
-        <h2>Your Interviews</h2>
+      {/* User's History Section */}
+      <section className="flex flex-col gap-6">
+        <h2 className="text-2xl font-bold">Your Interviews</h2>
 
         <div className="interviews-section">
           {hasPastInterviews ? (
@@ -61,13 +66,14 @@ async function Home() {
               />
             ))
           ) : (
-            <p>You haven&apos;t taken any interviews yet</p>
+            <p className="text-muted-foreground italic">You haven&apos;t taken any interviews yet. Start one above!</p>
           )}
         </div>
       </section>
 
-      <section className="flex flex-col gap-6 mt-8">
-        <h2>Take Interviews</h2>
+      {/* Community/Explore Section */}
+      <section className="flex flex-col gap-6 mb-10">
+        <h2 className="text-2xl font-bold">Explore Community Interviews</h2>
 
         <div className="interviews-section">
           {hasUpcomingInterviews ? (
@@ -83,11 +89,11 @@ async function Home() {
               />
             ))
           ) : (
-            <p>There are no interviews available</p>
+            <p className="text-muted-foreground italic">No public interviews available right now.</p>
           )}
         </div>
       </section>
-    </>
+    </div>
   );
 }
 
