@@ -38,14 +38,14 @@ async function Home() {
           </Button>
         </div>
 
-        <Image
-          src="/robot.png"
-          alt="SonicPrep AI Assistant"
-          width={400}
-          height={400}
-          priority // Fixes LCP build warning
-          className="max-sm:hidden w-auto h-auto object-contain" // Fixes aspect ratio build warning
-        />
+       <Image
+  src="/robot1.png"
+  alt="SonicPrep AI Assistant"
+  width={300}
+  height={300}
+  priority
+  className="max-sm:hidden w-auto h-auto object-contain transition-all duration-500 hover:scale-[1.02] hover:drop-shadow-[0_0_20px_rgba(168,85,247,0.4)]"
+/>
       </section>
 
       {/* User's History Section */}

@@ -28,18 +28,19 @@ const Layout = async ({ children }: { children: ReactNode }) => {
           className="flex items-center gap-2 hover:opacity-90 transition-all duration-300 group"
           aria-label="SonicPrep Home"
         >
-          {/* Logo height set to h-10 (40px) to keep the nav slim */}
-          <Image 
-            src="/logo3.png" 
-            alt="SonicPrep Logo" 
-            width={500} 
-            height={500}
-            className="object-contain w-auto h-25 group-hover:scale-105 transition-transform"
-            priority
-          />
+         {/* Logo height set to h-12 to keep it clear but the nav slim */}
+<Image 
+  src="/logo4.png" 
+  alt="SonicPrep Logo" 
+  width={150} 
+  height={100}
+  // Changed h-30 to h-12 and added the fix for the aspect ratio warning
+  className="object-contain w-auto h-20 group-hover:scale-105 transition-transform duration-300" 
+  priority 
+/>
           {/* Reduced text size from text-3xl to text-xl/2xl */}
           <h2 className="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-            SonicPrep
+           A Real-Time Voice Agent Interview Platform
           </h2>
         </Link>
 
