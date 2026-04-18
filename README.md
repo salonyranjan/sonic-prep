@@ -9,7 +9,7 @@
 [![Framework - Next.js 15](https://img.shields.io/badge/Framework-Next.js%2015-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![Styling - Tailwind CSS v4](https://img.shields.io/badge/Styling-Tailwind%20CSS%20v4-38BDB8?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Database - Firestore](https://img.shields.io/badge/Database-Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
-[![AI Engine - Gemini 1.5 Pro](https://img.shields.io/badge/AI%20Engine-Gemini%201.5%20Pro-4285F4?style=for-the-badge&logo=google-gemini&logoColor=white)](https://ai.google.dev/)
+[![AI Engine - Gemini 2.5 Pro](https://img.shields.io/badge/AI%20Engine-Gemini%201.5%20Pro-4285F4?style=for-the-badge&logo=google-gemini&logoColor=white)](https://ai.google.dev/)
 
 ---
 
@@ -91,7 +91,7 @@ Experience **SonicPrep AI** in action. Our ultra-low latency voice pipeline allo
 | Process | Status | Latency |
 | :--- | :--- | :--- |
 | **STT (Speech-to-Text)** | 🟢 Optimized | ~150ms |
-| **LLM Reasoning (Gemini 1.5 Pro)** | 🟢 Real-time | ~350ms |
+| **LLM Reasoning (Gemini 2.5 Pro)** | 🟢 Real-time | ~350ms |
 | **TTS (Text-to-Speech)** | 🟢 Fluid | ~100ms |
 | **Total Round-Trip (Sonic Path)** | 🚀 **Elite** | **< 600ms** |
 
