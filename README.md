@@ -21,8 +21,85 @@
 </div>
 
 ---
+## 📋 Table of Contents
 
-## 🏗️ High-Level Project Architecture
+* [✨ 1. Key Features](#1-key-features)
+* [🎥 2. Live Demo](#2-live-demo)
+    * [⚡ Zero-Latency Performance](#zero-latency-performance)
+* [🏗️ 3. Architecture & Flows](#3-architecture--flows)
+    * [📐 3.1 High-Level Architecture](#31-high-level-architecture)
+    * [⚙️ 3.2 App Logic & State Flow](#32-app-logic--state-flow)
+    * [🔄 3.3 Data Interaction Model](#33-data-interaction-model)
+* [🛠️ 4. Tech Stack & Ecosystem](#4-tech-stack--ecosystem)
+* [📊 5. Database & Schema](#5-database--schema)
+    * [📋 5.1 Collections Schema](#51-collections-schema)
+    * [💾 5.2 Document Blueprints](#52-document-blueprints)
+    * [🔒 5.3 Security Rules](#53-security-rules)
+* [📦 6. Installation & Setup](#6-installation--setup)
+    * [⚙️ 6.1 Environment Config](#61-environment-config)
+    * [🚀 6.2 Production Build](#62-production-build)
+* [🤝 7. Contributing](#7-contributing)
+    * [🗺️ 7.1 Future Roadmap](#71-future-roadmap)
+* [👨‍💻 8. Developed By](#8-developed-by)
+---
+
+## 1.✨ Key Features
+
+SonicPrep isn't just a mock interview tool; it's a **Real-Time Career Intelligence Agent** designed to simulate the high-pressure environment of top-tier technical interviews.
+
+| 🎙️ Real-Time Voice AI | 🧠 Intelligent RAG | 📊 Behavioral Scoring |
+| :--- | :--- | :--- |
+| **Sub-500ms Latency**: Built on Vapi WebRTC for natural, human-like dialogue without the "AI pause." | **Domain-Specific**: Uses Pinecone to retrieve actual interview questions for your specific tech stack (MERN, Python, etc.). | **Post-Call Analytics**: Uses Gemini to analyze your tone, confidence, and technical accuracy. |
+
+---
+
+### 🚀 Advanced Functionalities
+
+* **⚡ The "Sonic" Pipeline**: A custom-orchestrated audio path that handles STT (Speech-to-Text), LLM reasoning, and TTS (Text-to-Speech) simultaneously for zero-lag interactions.
+* **🛠️ Tech-Stack Adaptation**: The AI dynamically adjusts its difficulty based on your selected stack—asking deep-dive questions on **Next.js Server Actions** or **NoSQL Schema Design**.
+* **📂 Persistent Interview History**: Automatically saves your transcripts and scores to **Firebase**, allowing you to track your growth over time.
+* **🌐 Community Exploration**: A public "Hall of Fame" where users can share their high-scoring interview sessions to help others learn.
+* **🤖 Agentic Behavioral Feedback**: Beyond just text, the agent provides a "Communication Confidence" score based on your response pacing and vocabulary.
+
+---
+
+### 🎨 Cinematic User Experience
+* **Glassmorphic UI**: A modern, high-contrast Dark Mode interface built with **Tailwind v4**.
+* **Fluid Animations**: Interactive 3D elements and transitions powered by **GSAP** and **Framer Motion** for a "Cinematic" feel.
+---
+  
+
+## 2.🎥 Live Demo
+
+Experience **SonicPrep AI** in action. Our ultra-low latency voice pipeline allows for natural, fluid conversation without the typical AI "lag."
+
+<div align="center">
+  <a href="https://your-demo-link.vercel.app">
+    <img src="https://raw.githubusercontent.com/salonyranjan/sonic-prep/main/public/demo-preview.gif" alt="SonicPrep Demo Walkthrough" width="800" style="border-radius: 10px; border: 2px solid #22d3ee;">
+  </a>
+
+  <br/>
+
+  ### [🚀 Try the Live Demo Now](https://sonic-prep.vercel.app)
+  
+  *(Note: Requires Microphone Access and a stable internet connection for the best experience)*
+</div>
+
+---
+
+### ⚡ Zero-Latency Performance
+| Process | Status | Latency |
+| :--- | :--- | :--- |
+| **STT (Speech-to-Text)** | 🟢 Optimized | ~150ms |
+| **LLM Reasoning (Gemini 1.5 Pro)** | 🟢 Real-time | ~350ms |
+| **TTS (Text-to-Speech)** | 🟢 Fluid | ~100ms |
+| **Total Round-Trip (Sonic Path)** | 🚀 **Elite** | **< 600ms** |
+
+---
+
+## 🏗️ 3. Architecture & Flows
+SonicPrep AI is built on a **Decoupled 3-Tier Architecture**, separating the real-time voice stream from the persistent data and intelligence layers.
+###  📐3.1 High-Level Project Architecture
 ```mermaid
 graph TD
     %% Global Styling
@@ -74,7 +151,7 @@ graph TD
 
 ---
 
-## 🧠 App Logic & State Flow
+### 3.2🧠 App Logic & State Flow
 
 The interview process is managed through a specialized state machine to ensure zero-latency feedback and accurate behavioral tracking.
 
@@ -247,7 +324,7 @@ graph TD
 ```
 ---
 
-## 🛠️ Tech Stack & Ecosystem
+## 4.🛠️ Tech Stack & Ecosystem
 ```mermaid
 graph TD
     %% Define Global ClassDef Styling
@@ -320,7 +397,101 @@ graph TD
 * **Behavioral Intelligence**: Analyzes more than just "what" you said—it evaluates "how" you said it, providing a **Behavioral Score** for confidence and tone.
 
 ---
-## 📦 Installation & Setup
+## 📊 5. Database & Schema
+
+SonicPrep AI utilizes **Firebase Firestore** with a flat, high-performance NoSQL structure. This ensures sub-100ms data retrieval for real-time interview dashboards.
+
+### 5.1 Collections Schema
+The database is organized into four core collections, optimized for cross-referenced queries.
+
+| Collection | Data Role | Primary Keys |
+| :--- | :--- | :--- |
+| **`users`** | Identity & Progress | `uid`, `email`, `avgScore` |
+| **`interviews`** | Session Metadata | `interviewId`, `userId`, `role` |
+| **`transcripts`** | Real-time Dialogue | `interviewId`, `content`, `timestamp` |
+| **`feedback`** | AI Analysis | `interviewId`, `technicalScore`, `behavioralScore` |
+
+---
+
+### 5.2 Document Blueprints (JSON)
+
+#### **Interviews Collection**
+Stores the configuration and metadata for every mock session.
+```json
+{
+  "id": "int_88291k",
+  "userId": "user_slny26",
+  "role": "Frontend Developer",
+  "techStack": ["Next.js 15", "Tailwind v4", "GSAP"],
+  "status": "completed",
+  "isPublic": true,
+  "createdAt": "2026-04-18T15:00:40Z"
+}
+```
+#### **Feedback Collection**
+Stores the deep-dive analysis generated by the Gemini 1.5 Pro engine.
+
+```json
+{
+  "interviewId": "int_88291k",
+  "scores": {
+    "technical": 8.5,
+    "communication": 9.0,
+    "confidence": 7.5
+  },
+  "aiAnalysis": {
+    "strengths": ["Strong understanding of RAG", "Clear articulation"],
+    "improvements": ["Work on React Server Component lifecycle explanation"],
+    "behavioralFeedback": "Tone was professional but slightly fast-paced."
+  }
+}
+```
+---
+### 🔒 5.3 Security Rules
+
+```JavaScript
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    /**
+     * @collection interviews
+     * Logic: Users can CRUD their own interviews. 
+     * Community can read only if 'isPublic' is true.
+     */
+    match /interviews/{interviewId} {
+      // Allow full access to the owner of the document
+      allow read, write: if request.auth != null && 
+                         request.auth.uid == resource.data.userId;
+      
+      // Allow the community to explore high-scoring public sessions
+      allow read: if resource.data.isPublic == true;
+    }
+
+    /**
+     * @collection users
+     * Logic: Strict Privacy. Only the authenticated user 
+     * can view or modify their profile metadata.
+     */
+    match /users/{userId} {
+      allow read, write: if request.auth != null && 
+                         request.auth.uid == userId;
+    }
+
+    /**
+     * @collection feedback
+     * Logic: Feedback is sensitive AI analysis. 
+     * Only the owner can view it.
+     */
+    match /feedback/{feedbackId} {
+      allow read: if request.auth != null && 
+                  request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+    }
+  }
+}
+```
+---
+## 6.📦 Installation & Setup
 
 Follow these steps to get a local development instance of **SonicPrep AI** running on your machine.
 
@@ -338,8 +509,8 @@ cd sonic-prep
 npm install
 ```
 
-### 3. Environment Configuration
-Create a .env.local file in the root directory and populate it with your credentials:
+## 6.1 Environment Configuration
+### 3.Create a .env.local file in the root directory and populate it with your credentials:
 
 ```bash
 # --- AI & VOICE CONFIGURATION ---
@@ -382,53 +553,7 @@ service cloud.firestore {
   }
 }
 ```
-### 📊 3. Collections Schema
 
-SonicPrep AI utilizes a **Flat NoSQL Structure** in Firestore to ensure lightning-fast queries and high scalability. Below is the blueprint of the primary collections:
-
-| Collection | Role | Primary Keys |
-| :--- | :--- | :--- |
-| **`users`** | Identity & Progress | `uid`, `email`, `avgScore` |
-| **`interviews`** | Session Metadata | `interviewId`, `userId`, `role` |
-| **`transcripts`** | Real-time Dialogue | `interviewId`, `content`, `timestamp` |
-| **`feedback`** | AI Analysis | `interviewId`, `technicalScore`, `behavioralScore` |
-
----
-
-### 📂 Document Structures
-
-#### **Interviews Collection**
-Stores the configuration and metadata for every mock session.
-```json
-{
-  "id": "int_88291k",
-  "userId": "user_slny26",
-  "role": "Frontend Developer",
-  "techStack": ["Next.js", "Tailwind", "GSAP"],
-  "type": "Technical",
-  "status": "completed",
-  "isPublic": true,
-  "createdAt": "2026-04-18T15:00:40Z"
-}
-```
-#### **Feedback Collection**
-Stores the deep-dive analysis generated by the Gemini 1.5 Pro engine.
-
-```json
-{
-  "interviewId": "int_88291k",
-  "scores": {
-    "technical": 8.5,
-    "communication": 9.0,
-    "confidence": 7.5
-  },
-  "aiAnalysis": {
-    "strengths": ["Strong understanding of RAG", "Clear articulation"],
-    "improvements": ["Work on React Server Component lifecycle explanation"],
-    "behavioralFeedback": "Tone was professional but slightly fast-paced."
-  }
-}
-```
 ### 🚀 5. Run Development Server
 
 Once your environment variables and database are configured, you are ready to launch the **SonicPrep** engine. 
@@ -447,6 +572,71 @@ Access the Application
 Open your browser and navigate to:
 
 http://localhost:3000
+
+---
+
+### 6.2📦 Production Build
+
+For the final deployment, **SonicPrep AI** leverages the Next.js **Turbopack** build engine and **SWC** (Speedy Web Compiler) to ensure the smallest possible bundle size and ultra-fast load times.
+
+### 1. Optimize and Build
+This command executes a production-ready build, performing dead-code elimination, image optimization, and static page generation.
+
+```bash
+# Using npm
+npm run build
+npm run start
+
+# Or using Bun (for 2x faster build speed)
+bun run build
+```
+---
+## 7.🤝 Contributing
+
+SonicPrep is an open-source project, and contributions are what make the developer community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+### 🛠️ How to Contribute
+
+1. **Fork the Project**
+2. **Create your Feature Branch** (`git checkout -b feature/AmazingFeature`)
+3. **Commit your Changes** (`git commit -m 'Add some AmazingFeature'`)
+4. **Push to the Branch** (`git push origin feature/AmazingFeature`)
+5. **Open a Pull Request**
+
+### 📜 Contribution Guidelines
+* **Code Quality**: Ensure your code follows the existing project structure and uses **TypeScript** for type safety.
+* **UI Consistency**: Any new UI components should strictly follow the **Sonic Dark Mode** (Glassmorphism) guidelines using **Tailwind v4**.
+* **Testing**: If you add a new AI agent or utility, please include a basic test case.
+
+---
+
+### 7.1🗺️ Future Roadmap
+
+Help us build the next generation of career intelligence. Current priorities include:
+- [ ] **Video Analysis**: Integrating body language and eye-tracking metrics.
+- [ ] **Live Coding Sandbox**: A shared IDE for real-time technical assessments.
+- [ ] **Company-Specific Agents**: Specialized RAG pipelines for companies like **TCS, Infosys, and Google**.
+- [ ] **Mobile App**: A React Native version for on-the-go mock interviews.
+
+---
+
+<div align="center">
+
+## 8.👨‍💻 Developed By
+
+### **Salony Ranjan**
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Salony_Ranjan-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/salonyranjan)
+[![Portfolio](https://img.shields.io/badge/Portfolio-Visit_Site-000000?style=for-the-badge&logo=google-chrome&logoColor=white)](https://salonyranjan.vercel.app)
+[![GitHub](https://img.shields.io/badge/GitHub-Follow_Me-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/salonyranjan)
+
+---
+
+ "Building the future of AI-driven career intelligence, one voice at a time."
+
+**Patna | Kolkata | Remote**
+
+</div>
 
 ---
 
