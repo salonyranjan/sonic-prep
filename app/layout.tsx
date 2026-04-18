@@ -21,9 +21,9 @@ export const metadata: Metadata = {
   title: "SonicPrep | AI-Powered Mock Interviews",
   description: "Master your next job interview with real-time AI voice feedback and technical analysis.",
   icons: {
-    icon: "/favicon.ico", 
-    shortcut: "/logo3.png", // This will use your "Sonic Pulse" logo as the shortcut icon
-    apple: "/logo3.png",
+    icon: "/logo.svg", 
+    shortcut: "/logo.svg", // This will use your "Sonic Pulse" logo as the shortcut icon
+    apple: "/logo.svg",
   },
 };
 
