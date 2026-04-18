@@ -626,8 +626,8 @@ Help us build the next generation of career intelligence. Current priorities inc
 
 ### **Salony Ranjan**
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Salony_Ranjan-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/salonyranjan)
-[![Portfolio](https://img.shields.io/badge/Portfolio-Visit_Site-000000?style=for-the-badge&logo=google-chrome&logoColor=white)](https://salonyranjan.vercel.app)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Salony_Ranjan-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/salony-ranjan-b63200280/)
+[![Portfolio](https://img.shields.io/badge/Portfolio-Visit_Site-000000?style=for-the-badge&logo=google-chrome&logoColor=white)](https://vertex-flow-phi.vercel.app/)
 [![GitHub](https://img.shields.io/badge/GitHub-Follow_Me-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/salonyranjan)
 
 ---
