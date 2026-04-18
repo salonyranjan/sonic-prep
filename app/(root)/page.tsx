@@ -88,10 +88,10 @@ async function Home() {
 
             <div className="max-sm:hidden w-60 h-60 md:w-72 md:h-72 flex-shrink-0">
               <Image
-                src="/robot1.png"
+                src="/robo.png"
                 alt="SonicPrep AI Interview Assistant"
-                width={280}
-                height={280}
+                width={500}
+                height={500}
                 priority
                 className="w-full h-full object-contain drop-shadow-[0_0_30px_rgba(168,85,247,0.3)] transition-transform hover:scale-[1.03]"
               />
