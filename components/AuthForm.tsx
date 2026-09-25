@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { FirebaseError } from "firebase/app";
 import { getFirebaseAuth } from "@/firebase/client";
+import BrandLogo from "@/components/BrandLogo";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,7 +19,6 @@ import {
 } from "firebase/auth";
 import {
   ArrowRight,
-  AudioLines,
   Check,
   LoaderCircle,
   LockKeyhole,
@@ -149,9 +149,7 @@ export default function AuthForm({ type }: { type: FormType }) {
         aria-label="SonicPrep home"
         className="mb-8 inline-flex items-center gap-3 rounded-lg text-xl font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-primary-200 sm:mb-12"
       >
-        <span className="flex size-10 items-center justify-center rounded-xl border border-primary-200/25 bg-primary-200/10 text-primary-200">
-          <AudioLines size={23} aria-hidden="true" />
-        </span>
+        <BrandLogo size={40} className="rounded-xl" />
         SonicPrep<span className="sr-only"> home</span>
       </Link>
       <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-20">
@@ -196,7 +194,7 @@ export default function AuthForm({ type }: { type: FormType }) {
             aria-hidden="true"
           >
             <div className="flex items-center gap-3">
-              <AudioLines className="text-primary-200" size={20} />
+              <BrandLogo size={24} className="rounded-md" />
               <span className="text-sm font-medium text-zinc-200">
                 Space to practice. Room to grow.
               </span>

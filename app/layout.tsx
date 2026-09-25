@@ -6,7 +6,11 @@ export const metadata: Metadata = {
   title: "SonicPrep | AI-Powered Mock Interviews",
   description:
     "Practice realistic AI voice interviews and build confidence with actionable feedback.",
-  icons: { icon: "/logo.svg", shortcut: "/logo.svg", apple: "/logo.svg" },
+  icons: {
+    icon: "/logo.svg",
+    shortcut: "/logo.svg",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({

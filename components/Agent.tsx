@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { getVapi } from "@/lib/vapi.sdk";
 import { interviewer } from "@/constants";
 import { createFeedback } from "@/lib/actions/general.action";
+import BrandLogo from "@/components/BrandLogo";
 interface AgentProps {
   userName: string;
   userId?: string;
@@ -152,8 +153,12 @@ const Agent = ({
         return () => clearTimeout(timeout);
       } else if (messages.length > 0) {
         if (interviewId && userId) {
-          feedbackStarted.current = true;
-          handleGenerateFeedback(messages);
+          const timeout = setTimeout(() => {
+            if (feedbackStarted.current) return;
+            feedbackStarted.current = true;
+            void handleGenerateFeedback(messages);
+          }, 0);
+          return () => clearTimeout(timeout);
         } else {
           router.push("/");
         }
@@ -211,7 +216,8 @@ const Agent = ({
   return (
     <div className="flex flex-col items-center w-full gap-8 py-10 px-2 sm:px-4 bg-zinc-950">
       <div className="text-center space-y-4">
-        <h1 className="text-3xl sm:text-4xl font-semibold text-primary-200">
+        <h1 className="flex items-center justify-center gap-3 text-3xl sm:text-4xl font-semibold text-primary-200">
+          <BrandLogo size={40} className="shrink-0 rounded-xl" />
           SonicPrep AI Interview
         </h1>
         <div

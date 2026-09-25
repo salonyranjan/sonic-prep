@@ -3,6 +3,7 @@ import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import InterviewCard from "@/components/InterviewCard";
+import BrandLogo from "@/components/BrandLogo";
 
 import { getCurrentUser } from "@/lib/actions/auth.action";
 import {
@@ -186,9 +187,9 @@ async function Home() {
           </div>
         </section>
       </div>
-      <footer className="py-6 text-center text-sm text-zinc-500 border-t border-zinc-800">
-        © {new Date().getFullYear()} SonicPrep AI. Mock interviews that feel
-        real.
+      <footer className="flex items-center justify-center gap-2 py-6 text-center text-sm text-zinc-500 border-t border-zinc-800">
+        <BrandLogo size={24} className="shrink-0 rounded-md" />
+        <span>© {new Date().getFullYear()} SonicPrep AI. Mock interviews that feel real.</span>
       </footer>
     </div>
   );

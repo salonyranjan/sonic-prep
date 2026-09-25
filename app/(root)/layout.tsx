@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import { AudioLines, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
+import BrandLogo from "@/components/BrandLogo";
 import { getCurrentUser, signOut } from "@/lib/actions/auth.action";
 
 export default async function Layout({ children }: { children: ReactNode }) {
@@ -18,11 +19,7 @@ export default async function Layout({ children }: { children: ReactNode }) {
             href="/"
             className="flex shrink-0 items-center gap-2 rounded-lg text-lg font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-primary-200"
           >
-            <AudioLines
-              className="text-primary-200"
-              size={24}
-              aria-hidden="true"
-            />
+            <BrandLogo size={36} className="rounded-[10px]" />
             SonicPrep
           </Link>
           <div className="flex items-center gap-3 sm:gap-6">
