@@ -1,3 +1,4 @@
+import type { RouteParams } from "@/types";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 
@@ -15,13 +16,14 @@ const InterviewDetails = async ({ params }: RouteParams) => {
   const { id } = await params;
 
   const user = await getCurrentUser();
+  if (!user) redirect("/sign-in");
 
   const interview = await getInterviewById(id);
   if (!interview) redirect("/");
 
   const feedback = await getFeedbackByInterviewId({
     interviewId: id,
-    userId: user?.id!,
+    userId: user.id,
   });
 
   return (
@@ -48,10 +50,10 @@ const InterviewDetails = async ({ params }: RouteParams) => {
       </div>
 
       <Agent
-        userName={user?.name!}
+        userName={user.name}
         userId={user?.id}
         interviewId={id}
-        type="interview"
+        type="practice"
         questions={interview.questions}
         feedbackId={feedback?.id}
       />

@@ -10,7 +10,7 @@ const Page = async () => {
 
       <Agent
         userName={user?.name || "Salony Ranjan"}
-        userId={user?.id || ""} 
+        userId={user?.id || ""}
         type="generate"
       />
     </div>

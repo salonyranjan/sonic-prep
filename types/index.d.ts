@@ -1,11 +1,10 @@
-// 1. Core Data Models
 export interface Interview {
   id: string;
   role: string;
   level: string;
   questions: string[];
   techstack: string[];
-  createdAt: Date; // Changed to Date to match your formatInterviews helper
+  createdAt: string;
   userId: string;
   type: string;
   finalized: boolean;
@@ -30,41 +29,20 @@ export interface User {
   name: string;
   email: string;
   id: string;
+  imageUrl?: string;
 }
-
-// 2. Component Props
 export interface InterviewCardProps {
   interviewId?: string;
   userId?: string;
   role: string;
   type: string;
   techstack: string[];
-  createdAt?: string; // Kept as string because InterviewCard receives .toISOString()
-}
-
-export interface AgentProps {
-  userName: string;
-  userId?: string;
-  interviewId?: string;
-  feedbackId?: string;
-  type: "generate" | "interview";
-  questions?: string[];
-}
-
-export interface InterviewFormProps {
-  interviewId: string;
-  role: string;
-  level: string;
-  type: string;
-  techstack: string[];
-  amount: number;
+  createdAt?: string;
 }
 
 export interface TechIconProps {
   techStack: string[];
 }
-
-// 3. Action Parameters (Server Actions)
 export interface CreateFeedbackParams {
   interviewId: string;
   userId: string;
@@ -83,19 +61,13 @@ export interface GetLatestInterviewsParams {
 }
 
 export interface SignInParams {
-  email: string;
   idToken: string;
 }
 
 export interface SignUpParams {
-  uid: string;
   name: string;
-  email: string;
-  password: string;
+  idToken: string;
 }
-
-// 4. Utility / Routing Types
-export type FormType = "sign-in" | "sign-up";
 
 export interface RouteParams {
   params: Promise<Record<string, string>>;

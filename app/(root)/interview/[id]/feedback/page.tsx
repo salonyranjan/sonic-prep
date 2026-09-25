@@ -1,3 +1,4 @@
+import type { RouteParams } from "@/types";
 import dayjs from "dayjs";
 import Link from "next/link";
 import Image from "next/image";
@@ -13,14 +14,16 @@ import { getCurrentUser } from "@/lib/actions/auth.action";
 const Feedback = async ({ params }: RouteParams) => {
   const { id } = await params;
   const user = await getCurrentUser();
+  if (!user) redirect("/sign-in");
 
   const interview = await getInterviewById(id);
   if (!interview) redirect("/");
 
   const feedback = await getFeedbackByInterviewId({
     interviewId: id,
-    userId: user?.id!,
+    userId: user.id,
   });
+  if (!feedback) redirect(`/interview/${id}`);
 
   return (
     <section className="section-feedback">
@@ -32,8 +35,7 @@ const Feedback = async ({ params }: RouteParams) => {
       </div>
 
       <div className="flex flex-row justify-center ">
-        <div className="flex flex-row gap-5">
-          {/* Overall Impression */}
+        <div className="flex flex-wrap gap-5">
           <div className="flex flex-row gap-2 items-center">
             <Image src="/star.svg" width={22} height={22} alt="star" />
             <p>
@@ -44,8 +46,6 @@ const Feedback = async ({ params }: RouteParams) => {
               /100
             </p>
           </div>
-
-          {/* Date */}
           <div className="flex flex-row gap-2">
             <Image src="/calendar.svg" width={22} height={22} alt="calendar" />
             <p>
@@ -60,8 +60,6 @@ const Feedback = async ({ params }: RouteParams) => {
       <hr />
 
       <p>{feedback?.finalAssessment}</p>
-
-      {/* Interview Breakdown */}
       <div className="flex flex-col gap-4">
         <h2>Breakdown of the Interview:</h2>
         {feedback?.categoryScores?.map((category, index) => (
@@ -93,7 +91,7 @@ const Feedback = async ({ params }: RouteParams) => {
       </div>
 
       <div className="buttons">
-        <Button className="btn-secondary flex-1">
+        <Button asChild className="btn-secondary flex-1">
           <Link href="/" className="flex w-full justify-center">
             <p className="text-sm font-semibold text-primary-200 text-center">
               Back to dashboard
@@ -101,7 +99,7 @@ const Feedback = async ({ params }: RouteParams) => {
           </Link>
         </Button>
 
-        <Button className="btn-primary flex-1">
+        <Button asChild className="btn-primary flex-1">
           <Link
             href={`/interview/${id}`}
             className="flex w-full justify-center"

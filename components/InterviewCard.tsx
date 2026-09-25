@@ -1,3 +1,4 @@
+import type { InterviewCardProps } from "@/types";
 import dayjs from "dayjs";
 import Link from "next/link";
 import Image from "next/image";
@@ -33,25 +34,24 @@ const InterviewCard = async ({
       Technical: "bg-light-800",
     }[normalizedType] || "bg-light-600";
 
-  const formattedDate = dayjs(
-    feedback?.createdAt || createdAt || Date.now()
-  ).format("MMM D, YYYY");
+  const date = feedback?.createdAt || createdAt;
+  const formattedDate =
+    date && dayjs(date).isValid()
+      ? dayjs(date).format("MMM D, YYYY")
+      : "Date unavailable";
 
   return (
-    <div className="card-border w-[360px] max-sm:w-full min-h-96">
+    <div className="card-border !w-full min-w-0 min-h-96">
       <div className="card-interview">
         <div>
-          {/* Type Badge */}
           <div
             className={cn(
               "absolute top-0 right-0 w-fit px-4 py-2 rounded-bl-lg",
-              badgeColor
+              badgeColor,
             )}
           >
             <p className="badge-text ">{normalizedType}</p>
           </div>
-
-          {/* Cover Image */}
           <Image
             src={getRandomInterviewCover()}
             alt="cover-image"
@@ -59,40 +59,34 @@ const InterviewCard = async ({
             height={90}
             className="rounded-full object-fit size-[90px]"
           />
-
-          {/* Interview Role */}
           <h3 className="mt-5 capitalize">{role} Interview</h3>
-
-          {/* Date & Score */}
-          <div className="flex flex-row gap-5 mt-3">
-            <div className="flex flex-row gap-2">
+          <div className="flex flex-wrap gap-3 mt-3">
+            <div className="flex items-center gap-2 whitespace-nowrap">
               <Image
                 src="/calendar.svg"
                 width={22}
                 height={22}
                 alt="calendar"
-                className="h-auto w-auto"
+                className="size-[22px] shrink-0"
               />
               <p>{formattedDate}</p>
             </div>
 
             <div className="flex flex-row gap-2 items-center">
               <Image src="/star.svg" width={22} height={22} alt="star" />
-              <p>{feedback?.totalScore || "---"}/100</p>
+              <p>{feedback?.totalScore ?? "---"}/100</p>
             </div>
           </div>
-
-          {/* Feedback or Placeholder Text */}
           <p className="line-clamp-2 mt-5">
             {feedback?.finalAssessment ||
               "You haven't taken this interview yet. Take it now to improve your skills."}
           </p>
         </div>
 
-        <div className="flex flex-row justify-between">
+        <div className="flex flex-wrap items-center gap-3 justify-between">
           <DisplayTechIcons techStack={techstack} />
 
-          <Button className="btn-primary">
+          <Button asChild className="btn-primary">
             <Link
               href={
                 feedback

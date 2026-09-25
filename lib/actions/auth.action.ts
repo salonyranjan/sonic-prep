@@ -1,22 +1,21 @@
 "use server";
 
-import { auth, db } from "@/firebase/admin";
+import { getAdminServices } from "@/firebase/admin";
 import { cookies } from "next/headers";
+import type { SignInParams, SignUpParams, User } from "@/types";
 
-// Session duration (1 week)
 const SESSION_DURATION = 60 * 60 * 24 * 7;
 
-// Set session cookie
-export async function setSessionCookie(idToken: string) {
-  const cookieStore = await cookies();
-
-  // Create session cookie
+async function setSessionCookie(idToken: string) {
+  const { auth } = getAdminServices();
+  const claims = await auth.verifyIdToken(idToken, true);
+  if (Date.now() / 1000 - claims.auth_time > 300) {
+    throw new Error("Please sign in again.");
+  }
   const sessionCookie = await auth.createSessionCookie(idToken, {
-    expiresIn: SESSION_DURATION * 1000, // milliseconds
+    expiresIn: SESSION_DURATION * 1000,
   });
-
-  // Set cookie in the browser
-  cookieStore.set("session", sessionCookie, {
+  (await cookies()).set("session", sessionCookie, {
     maxAge: SESSION_DURATION,
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -25,108 +24,85 @@ export async function setSessionCookie(idToken: string) {
   });
 }
 
-export async function signUp(params: SignUpParams) {
-  const { uid, name, email } = params;
-
+export async function signUp({ name, idToken }: SignUpParams) {
   try {
-    // check if user exists in db
-    const userRecord = await db.collection("users").doc(uid).get();
-    if (userRecord.exists)
+    const { auth, db } = getAdminServices();
+    const claims = await auth.verifyIdToken(idToken, true);
+    if (Date.now() / 1000 - claims.auth_time > 300)
+      throw new Error("Please sign in again.");
+    const normalizedName = name.trim();
+    if (
+      !claims.email ||
+      normalizedName.length < 2 ||
+      normalizedName.length > 80
+    ) {
       return {
         success: false,
-        message: "User already exists. Please sign in.",
-      };
-
-    // save user to db
-    await db.collection("users").doc(uid).set({
-      name,
-      email,
-      // profileURL,
-      // resumeURL,
-    });
-
-    return {
-      success: true,
-      message: "Account created successfully. Please sign in.",
-    };
-  } catch (error: any) {
-    console.error("Error creating user:", error);
-
-    // Handle Firebase specific errors
-    if (error.code === "auth/email-already-exists") {
-      return {
-        success: false,
-        message: "This email is already in use",
+        message: "Enter a name between 2 and 80 characters.",
       };
     }
-
-    return {
-      success: false,
-      message: "Failed to create account. Please try again.",
-    };
-  }
-}
-
-export async function signIn(params: SignInParams) {
-  const { email, idToken } = params;
-
-  try {
-    const userRecord = await auth.getUserByEmail(email);
-    if (!userRecord)
-      return {
-        success: false,
-        message: "User does not exist. Create an account.",
-      };
-
+    const ref = db.collection("users").doc(claims.uid);
+    await db.runTransaction(async (transaction) => {
+      const existing = await transaction.get(ref);
+      if (!existing.exists)
+        transaction.set(ref, { name: normalizedName, email: claims.email });
+    });
     await setSessionCookie(idToken);
-  } catch (error: any) {
-    console.log("");
-
+    return { success: true, message: "Account created successfully." };
+  } catch {
     return {
       success: false,
-      message: "Failed to log into account. Please try again.",
+      message:
+        "We couldn't finish setting up your account. Please sign in to try again.",
     };
   }
 }
 
-// Sign out user by clearing the session cookie
-export async function signOut() {
-  const cookieStore = await cookies();
-
-  cookieStore.delete("session");
+export async function signIn({ idToken }: SignInParams) {
+  try {
+    const { auth, db } = getAdminServices();
+    const claims = await auth.verifyIdToken(idToken, true);
+    if (Date.now() / 1000 - claims.auth_time > 300)
+      throw new Error("Please sign in again.");
+    const user = await auth.getUser(claims.uid);
+    // Recover accounts whose initial profile setup was interrupted.
+    const ref = db.collection("users").doc(claims.uid);
+    await db.runTransaction(async (transaction) => {
+      const existing = await transaction.get(ref);
+      if (!existing.exists)
+        transaction.set(ref, {
+          name: user.displayName || "Candidate",
+          email: user.email || "",
+        });
+    });
+    await setSessionCookie(idToken);
+    return { success: true, message: "Signed in successfully." };
+  } catch {
+    return {
+      success: false,
+      message: "We couldn't sign you in. Please try again.",
+    };
+  }
 }
 
-// Get current user from session cookie
+export async function signOut() {
+  (await cookies()).delete("session");
+}
+
 export async function getCurrentUser(): Promise<User | null> {
-  const cookieStore = await cookies();
-
-  const sessionCookie = cookieStore.get("session")?.value;
+  const sessionCookie = (await cookies()).get("session")?.value;
   if (!sessionCookie) return null;
-
   try {
-    const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
-
-    // get user info from db
-    const userRecord = await db
-      .collection("users")
-      .doc(decodedClaims.uid)
-      .get();
-    if (!userRecord.exists) return null;
-
-    return {
-      ...userRecord.data(),
-      id: userRecord.id,
-    } as User;
-  } catch (error) {
-    console.log(error);
-
-    // Invalid or expired session
+    const { auth, db } = getAdminServices();
+    const claims = await auth.verifySessionCookie(sessionCookie, true);
+    const record = await db.collection("users").doc(claims.uid).get();
+    if (!record.exists) return null;
+    return { ...record.data(), id: record.id } as User;
+  } catch {
     return null;
   }
 }
 
-// Check if user is authenticated
 export async function isAuthenticated() {
-  const user = await getCurrentUser();
-  return !!user;
+  return !!(await getCurrentUser());
 }

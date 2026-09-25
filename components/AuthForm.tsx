@@ -2,8 +2,10 @@
 
 import { z } from "zod";
 import Link from "next/link";
+import { useState } from "react";
 import { toast } from "sonner";
-import { auth } from "@/firebase/client";
+import { FirebaseError } from "firebase/app";
+import { getFirebaseAuth } from "@/firebase/client";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,281 +13,338 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
+  sendPasswordResetEmail,
+  signOut as firebaseSignOut,
 } from "firebase/auth";
+import {
+  ArrowRight,
+  AudioLines,
+  Check,
+  LoaderCircle,
+  LockKeyhole,
+} from "lucide-react";
 import { Form } from "@/components/ui/form";
 import { signIn, signUp } from "@/lib/actions/auth.action";
 import FormField from "./FormField";
 
 type FormType = "sign-in" | "sign-up";
-
 const authFormSchema = (type: FormType) =>
   z.object({
-    name: type === "sign-up" 
-      ? z.string().min(3, "Name must be at least 3 characters") 
-      : z.string().optional(),
-    email: z.string().email("Please enter a valid email"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
+    name:
+      type === "sign-up"
+        ? z
+            .string()
+            .trim()
+            .min(2, "Enter at least 2 characters.")
+            .max(80, "Use 80 characters or fewer.")
+        : z.string().optional(),
+    email: z.string().trim().email("Enter a valid email address."),
+    password: z
+      .string()
+      .min(
+        type === "sign-up" ? 6 : 1,
+        type === "sign-up"
+          ? "Use at least 6 characters."
+          : "Enter your password.",
+      ),
   });
 
-const AuthForm = ({ type }: { type: FormType }) => {
+function errorMessage(error: unknown) {
+  if (!(error instanceof FirebaseError))
+    return "Something went wrong. Please try again.";
+  switch (error.code) {
+    case "auth/email-already-in-use":
+      return "This email already has an account. Sign in or reset your password.";
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
+      return "The email or password is incorrect. Please try again.";
+    case "auth/weak-password":
+      return "Choose a stronger password with at least 6 characters.";
+    case "auth/invalid-email":
+      return "Enter a valid email address.";
+    case "auth/too-many-requests":
+      return "Too many attempts. Please wait a few minutes before trying again.";
+    case "auth/network-request-failed":
+      return "Check your internet connection and try again.";
+    default:
+      return "We couldn't complete your request. Please try again.";
+  }
+}
+
+export default function AuthForm({ type }: { type: FormType }) {
   const router = useRouter();
   const isSignIn = type === "sign-in";
-
+  const [resetting, setResetting] = useState(false);
+  const [notice, setNotice] = useState("");
   const form = useForm<z.infer<ReturnType<typeof authFormSchema>>>({
     resolver: zodResolver(authFormSchema(type)),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-    },
+    defaultValues: { name: "", email: "", password: "" },
   });
+  const busy = form.formState.isSubmitting || resetting;
 
-  const onSubmit = async (data: z.infer<ReturnType<typeof authFormSchema>>) => {
-    const loadingToast = toast.loading("Processing...");
-    
+  async function onSubmit(data: z.infer<ReturnType<typeof authFormSchema>>) {
+    form.clearErrors("root");
+    setNotice("");
     try {
-      if (type === "sign-up") {
-        const { name, email, password } = data;
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(userCredential.user, { displayName: name! });
-
-        const result = await signUp({
-          uid: userCredential.user.uid,
-          name: name!,
-          email,
-          password,
-        });
-
-        if (!result || !result.success) {
-          toast.error(result?.message || "Failed to create account");
-          return;
-        }
-
-        toast.success("Account created! Welcome to SonicPrep 🚀");
-        form.reset();
-        router.push("/");
-      } else {
-        const { email, password } = data;
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const idToken = await userCredential.user.getIdToken();
-
-        const result = await signIn({ email, idToken });
-        if (!result || !result.success) {
-          toast.error(result?.message || "Sign in failed");
-          return;
-        }
-
-        toast.success("Welcome back! Let's crush those interviews 💥");
-        form.reset();
-        router.push("/");
+      const auth = getFirebaseAuth();
+      const credential = isSignIn
+        ? await signInWithEmailAndPassword(auth, data.email, data.password)
+        : await createUserWithEmailAndPassword(auth, data.email, data.password);
+      if (!isSignIn)
+        await updateProfile(credential.user, { displayName: data.name! });
+      const idToken = await credential.user.getIdToken();
+      const result = isSignIn
+        ? await signIn({ idToken })
+        : await signUp({ name: data.name!, idToken });
+      if (!result.success) {
+        form.setError("root", { message: result.message });
+        return;
       }
-    } catch (error: any) {
-      let errorMessage = "Something went wrong";
-      switch (error.code) {
-        case "auth/email-already-in-use":
-          errorMessage = "Email already registered ✨";
-          break;
-        case "auth/wrong-password":
-        case "auth/user-not-found":
-          errorMessage = "Invalid credentials 🔒";
-          break;
-        case "auth/weak-password":
-          errorMessage = "Password too weak 💪";
-          break;
-        case "auth/invalid-email":
-          errorMessage = "Invalid email format 📧";
-          break;
-        case "auth/too-many-requests":
-          errorMessage = "Too many attempts. Chill for a bit 😎";
-          break;
-        default:
-          errorMessage = error.message || "Unexpected error";
-      }
-      toast.error(errorMessage);
-    } finally {
-      toast.dismiss(loadingToast);
-      form.clearErrors();
+      // The HttpOnly server session is the source of authentication for the app.
+      await firebaseSignOut(auth).catch(() => undefined);
+      toast.success(
+        isSignIn
+          ? "Welcome back to SonicPrep."
+          : "Your account is ready. Let's get started.",
+      );
+      router.replace("/");
+      router.refresh();
+    } catch (error: unknown) {
+      form.setError("root", { message: errorMessage(error) });
     }
-  };
+  }
+
+  async function resetPassword() {
+    if (busy || !(await form.trigger("email"))) return;
+    setResetting(true);
+    setNotice("");
+    form.clearErrors("root");
+    try {
+      await sendPasswordResetEmail(
+        getFirebaseAuth(),
+        form.getValues("email").trim(),
+      );
+      setNotice(
+        "If an account exists for this email, you'll receive a password reset link. Check your inbox and spam folder.",
+      );
+    } catch (error: unknown) {
+      if (
+        error instanceof FirebaseError &&
+        error.code === "auth/user-not-found"
+      ) {
+        setNotice(
+          "If an account exists for this email, you'll receive a password reset link. Check your inbox and spam folder.",
+        );
+      } else form.setError("root", { message: errorMessage(error) });
+    } finally {
+      setResetting(false);
+    }
+  }
 
   return (
-    <div className="relative card-border lg:min-w-[566px] bg-gradient-to-br from-zinc-950 via-zinc-900 to-black/90 backdrop-blur-3xl rounded-3xl overflow-hidden border border-cyan-900/50 shadow-2xl shadow-cyan-500/20">
-      {/* High-vis particle background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-lime-400/20 rounded-full blur-3xl animate-pulse animation-delay-2000" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-emerald-400/20 rounded-full blur-3xl animate-pulse animation-delay-1000" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-radial from-cyan-400/30 via-transparent to-emerald-400/20 rounded-full blur-3xl animate-pulse" />
-      </div>
-
-      <div className="relative flex flex-col gap-8 py-14 px-10 bg-black/40 backdrop-blur-xl border border-cyan-900/40 rounded-2xl shadow-inner shadow-cyan-500/10">
-        {/* 🔥 HIGH-VISIBILITY SONICPREP */}
-        <div className="text-center mb-8">
-          <h2 className="high-vis-title text-5xl sm:text-6xl md:text-7xl font-black tracking-tight bg-gradient-to-r from-cyan-300 via-lime-400 to-emerald-400 bg-clip-text text-transparent drop-shadow-2xl shadow-cyan-500/50 mb-6">
-            SonicPrep
-          </h2>
-          
-          <h3 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-cyan-300 via-emerald-300 to-lime-300 bg-clip-text text-transparent drop-shadow-xl shadow-lime-400/50">
-            Practice job interviews with AI
-          </h3>
-          <p className="text-zinc-300 text-lg font-semibold mt-4 tracking-wide">Master your dream job interview 🚀</p>
-        </div>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
-            {!isSignIn && (
-              <div className="neon-input-wrapper">
+    <div className="w-full max-w-6xl">
+      <Link
+        href="/"
+        aria-label="SonicPrep home"
+        className="mb-8 inline-flex items-center gap-3 rounded-lg text-xl font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-primary-200 sm:mb-12"
+      >
+        <span className="flex size-10 items-center justify-center rounded-xl border border-primary-200/25 bg-primary-200/10 text-primary-200">
+          <AudioLines size={23} aria-hidden="true" />
+        </span>
+        SonicPrep<span className="sr-only"> home</span>
+      </Link>
+      <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-20">
+        <section className="max-w-xl" aria-labelledby="auth-intro">
+          <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary-200/20 bg-primary-200/5 px-3 py-1.5 text-xs font-medium tracking-wide text-primary-100">
+            <span className="size-1.5 rounded-full bg-primary-200" />
+            YOUR NEXT CHAPTER STARTS HERE
+          </span>
+          <h1
+            id="auth-intro"
+            className="text-4xl font-semibold leading-[1.15] tracking-tight sm:text-5xl lg:text-6xl"
+          >
+            A little practice.
+            <br />
+            <span className="text-primary-200">A lot more confidence.</span>
+          </h1>
+          <p className="mt-5 max-w-md text-base leading-7 text-zinc-400 sm:text-lg">
+            Prepare for your next opportunity with realistic AI interviews and
+            feedback you can put into practice.
+          </p>
+          <div className="mt-9 hidden space-y-4 lg:block">
+            {[
+              "Practice technical and behavioral questions",
+              "Build confidence with real-time voice conversations",
+              "Learn what works and where to improve",
+            ].map((text) => (
+              <div
+                key={text}
+                className="flex items-center gap-3 text-sm text-zinc-300"
+              >
+                <Check
+                  size={17}
+                  className="shrink-0 text-primary-200"
+                  aria-hidden="true"
+                />
+                {text}
+              </div>
+            ))}
+          </div>
+          <div
+            className="mt-12 hidden max-w-sm rounded-2xl border border-white/10 bg-white/[0.025] p-5 lg:block"
+            aria-hidden="true"
+          >
+            <div className="flex items-center gap-3">
+              <AudioLines className="text-primary-200" size={20} />
+              <span className="text-sm font-medium text-zinc-200">
+                Space to practice. Room to grow.
+              </span>
+            </div>
+            <div className="mt-5 flex h-10 items-center gap-1.5">
+              {[
+                12, 22, 16, 30, 38, 24, 16, 28, 40, 26, 18, 34, 22, 14, 30, 38,
+                20, 12, 26, 16, 32, 20, 12, 24, 18, 10,
+              ].map((height, i) => (
+                <span
+                  key={i}
+                  className="flex-1 rounded-full bg-primary-200/40"
+                  style={{ height }}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+        <section
+          aria-labelledby="auth-heading"
+          className="min-w-0 rounded-3xl border border-white/10 bg-zinc-900/80 p-6 shadow-2xl shadow-black/20 sm:p-9"
+        >
+          <div className="mb-7">
+            <h2
+              id="auth-heading"
+              className="text-2xl font-semibold tracking-tight"
+            >
+              {isSignIn ? "Welcome back" : "Create your account"}
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-400">
+              {isSignIn
+                ? "Sign in to continue your interview practice."
+                : "Start building confidence for your next interview."}
+            </p>
+          </div>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              noValidate
+              aria-busy={busy}
+            >
+              <fieldset
+                disabled={busy}
+                className="min-w-0 space-y-5 disabled:opacity-70"
+              >
+                <legend className="sr-only">
+                  {isSignIn ? "Sign in details" : "Account details"}
+                </legend>
+                {!isSignIn && (
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    label="Full name"
+                    placeholder="Alex Morgan"
+                    autoComplete="name"
+                  />
+                )}
                 <FormField
                   control={form.control}
-                  name="name"
-                  label="Full Name"
-                  placeholder="Enter your full name"
-                  type="text"
+                  name="email"
+                  label="Email address"
+                  placeholder="you@example.com"
+                  type="email"
+                  autoComplete="email"
                 />
-              </div>
-            )}
-
-            <div className="neon-input-wrapper">
-              <FormField
-                control={form.control}
-                name="email"
-                label="Email Address"
-                placeholder="your@email.com"
-                type="email"
-              />
-            </div>
-
-            <div className="neon-input-wrapper">
-              <FormField
-                control={form.control}
-                name="password"
-                label="Password"
-                placeholder={isSignIn ? "Enter your password" : "Create strong password (6+ chars)"}
-                type="password"
-              />
-            </div>
-
-            {/* 🌟 HIGH-VIS NEON BUTTON */}
-            <button
-              type="submit"
-              disabled={form.formState.isSubmitting}
-              className={`
-                high-vis-neon-btn w-full h-16 text-xl font-black uppercase tracking-widest
-                relative overflow-hidden group bg-gradient-to-br from-zinc-900/90 to-black/90 backdrop-blur-xl border-2 border-cyan-500/50
-                rounded-2xl shadow-2xl shadow-cyan-500/30 transition-all duration-500 ease-out hover:shadow-cyan-400/60
-                ${form.formState.isSubmitting 
-                  ? 'cursor-not-allowed opacity-70 scale-95' 
-                  : 'hover:scale-[1.03] hover:shadow-cyan-400/70 active:scale-[0.98] hover:-translate-y-1 cursor-pointer'
-                }
-              `}
-            >
-              {/* Shine sweep */}
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/40 via-white/20 to-emerald-400/40 -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
-              
-              {/* Multi-layer glow */}
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-emerald-500 to-lime-400 opacity-0 group-hover:opacity-100 blur-xl transition-all duration-700 animate-pulse" />
-              <div className="absolute inset-2 bg-gradient-to-r from-cyan-400 via-emerald-500 to-lime-400 rounded-xl opacity-0 group-hover:opacity-100 blur-lg" />
-              
-              <span className="relative z-10 flex items-center justify-center h-full bg-gradient-to-r from-cyan-300 via-emerald-400 to-lime-400 bg-clip-text text-transparent drop-shadow-2xl shadow-lime-400/50 font-black tracking-wider">
-                {form.formState.isSubmitting ? (
-                  <span className="flex items-center gap-3">
-                    <div className="w-7 h-7 border-2 border-white/40 border-t-cyan-300 rounded-full animate-spin shadow-lg shadow-cyan-400/50" />
-                    Processing...
-                  </span>
-                ) : isSignIn ? (
-                  "Sign In"
-                ) : (
-                  "Create Account"
+                <FormField
+                  control={form.control}
+                  name="password"
+                  label="Password"
+                  placeholder={
+                    isSignIn ? "Enter your password" : "Create a password"
+                  }
+                  type="password"
+                  autoComplete={isSignIn ? "current-password" : "new-password"}
+                  description={
+                    !isSignIn
+                      ? "Use at least 6 characters. A longer, unique password is best."
+                      : undefined
+                  }
+                />
+                {isSignIn && (
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      onClick={resetPassword}
+                      className="min-h-11 rounded text-sm text-primary-200 hover:text-primary-100 focus-visible:outline-2 focus-visible:outline-primary-200"
+                    >
+                      {resetting ? "Sending reset link..." : "Forgot password?"}
+                    </button>
+                  </div>
                 )}
-              </span>
-            </button>
-          </form>
-        </Form>
-
-        {/* High-vis link */}
-        <div className="text-center pt-8 border-t border-cyan-900/50">
-          <p className="text-zinc-400 text-sm font-medium mb-6">
-            {isSignIn ? "Don't have an account?" : "Already have an account?"}
+                {form.formState.errors.root && (
+                  <p
+                    role="alert"
+                    className="rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-sm leading-6 text-red-200"
+                  >
+                    {form.formState.errors.root.message}
+                  </p>
+                )}
+                {notice && (
+                  <p
+                    role="status"
+                    className="rounded-xl border border-primary-200/20 bg-primary-200/10 p-3 text-sm leading-6 text-primary-100"
+                  >
+                    {notice}
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary-200 px-4 text-sm font-semibold text-dark-100 transition-colors hover:bg-primary-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary-200 disabled:cursor-wait"
+                >
+                  {form.formState.isSubmitting ? (
+                    <>
+                      <LoaderCircle
+                        size={18}
+                        className="animate-spin"
+                        aria-hidden="true"
+                      />
+                      {isSignIn ? "Signing in..." : "Creating account..."}
+                    </>
+                  ) : (
+                    <>
+                      {isSignIn ? "Sign in" : "Create account"}
+                      <ArrowRight size={17} aria-hidden="true" />
+                    </>
+                  )}
+                </button>
+              </fieldset>
+            </form>
+          </Form>
+          <p className="mt-7 border-t border-white/10 pt-6 text-center text-sm leading-7 text-zinc-400">
+            {isSignIn ? "New to SonicPrep?" : "Already have an account?"}{" "}
+            <Link
+              href={isSignIn ? "/sign-up" : "/sign-in"}
+              className="inline-block rounded font-medium text-primary-200 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-primary-200"
+            >
+              {isSignIn ? "Create an account" : "Sign in"}
+            </Link>
           </p>
-          <Link
-            href={!isSignIn ? "/sign-in" : "/sign-up"}
-            className="high-vis-link inline-flex items-center gap-3 px-10 py-4 text-lg font-bold bg-zinc-900/70 hover:bg-zinc-800/60 border border-cyan-500/40 backdrop-blur-md rounded-2xl transition-all duration-400 hover:scale-105 hover:shadow-cyan-400/50 group shadow-lg"
-          >
-            <span className="bg-gradient-to-r from-cyan-300 via-emerald-400 to-lime-400 bg-clip-text text-transparent drop-shadow-lg">
-              {!isSignIn ? "Sign In" : "Sign Up"}
-            </span>
-            <div className="w-4 h-4 bg-gradient-to-r from-cyan-400 to-emerald-400 rounded-full scale-75 group-hover:scale-125 transition-all duration-300 shadow-lg shadow-cyan-400/60" />
-          </Link>
-        </div>
+        </section>
       </div>
-
-      <style jsx>{`
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Exo+2:wght@600;800&display=swap');
-        
-        .high-vis-title {
-          font-family: 'Orbitron', monospace;
-          text-shadow: 
-            0 0 10px #22d3ee,
-            0 0 20px #22d3ee,
-            0 0 40px #22d3ee,
-            0 0 60px #84cc16,
-            0 0 100px #84cc16;
-          animation: highVisFlicker 2.5s infinite alternate;
-        }
-
-        .high-vis-neon-btn:hover {
-          box-shadow: 
-            0 25px 70px rgba(34,211,238,0.6),
-            0 0 60px rgba(132,204,22,0.5),
-            inset 0 1px 0 rgba(255,255,255,0.3);
-        }
-
-        .high-vis-link:hover {
-          box-shadow: 0 20px 50px rgba(34,211,238,0.5);
-          border-color: rgba(34,211,238,0.7);
-        }
-
-        .neon-input-wrapper {
-          position: relative;
-        }
-
-        .neon-input-wrapper:focus-within {
-          box-shadow: 0 0 25px rgba(34,211,238,0.4);
-        }
-
-        .neon-input-wrapper::after {
-          content: '';
-          position: absolute;
-          bottom: 0.75rem;
-          left: 1.25rem;
-          right: 1.25rem;
-          height: 3px;
-          background: linear-gradient(90deg, transparent, #22d3ee, #84cc16, transparent);
-          opacity: 0;
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-          transform: scaleX(0);
-          transform-origin: center;
-        }
-
-        .neon-input-wrapper:focus-within::after {
-          opacity: 1;
-          transform: scaleX(1);
-          box-shadow: 0 0 15px rgba(34,211,238,0.6);
-        }
-
-        @keyframes highVisFlicker {
-          0%, 18%, 22%, 25%, 53%, 57%, 100% {
-            text-shadow: 0 0 10px #22d3ee, 0 0 20px #22d3ee, 0 0 40px #22d3ee, 0 0 60px #84cc16, 0 0 100px #84cc16;
-          }
-          20%, 24%, 55% { 
-            text-shadow: 0 0 5px #22d3ee, 0 0 10px #22d3ee, 0 0 20px #84cc16; 
-          }
-        }
-
-        @keyframes animation-delay-1000 { animation-delay: 1s; }
-        @keyframes animation-delay-2000 { animation-delay: 2s; }
-      `}</style>
+      <footer className="mt-10 flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-500">
+        <span>© {new Date().getFullYear()} SonicPrep</span>
+        <span className="flex items-center gap-1.5">
+          <LockKeyhole size={13} aria-hidden="true" />
+          Your next opportunity starts with practice.
+        </span>
+      </footer>
     </div>
   );
-};
-
-export default AuthForm;
+}

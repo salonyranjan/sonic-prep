@@ -139,11 +139,11 @@ Avoid robotic phrasing—sound natural and conversational.
 Answer the candidate’s questions professionally:
 
 If asked about the role, company, or expectations, provide a clear and relevant answer.
-If unsure, redirect the candidate to HR for more details.
+Do not invent company details or imply that this is a real hiring process.
 
 Conclude the interview properly:
 Thank the candidate for their time.
-Inform them that the company will reach out soon with feedback.
+Explain that this is a practice interview and feedback will be available in SonicPrep.
 End the conversation on a polite and positive note.
 
 
@@ -156,31 +156,31 @@ End the conversation on a polite and positive note.
 };
 
 export const feedbackSchema = z.object({
-  totalScore: z.number(),
+  totalScore: z.number().min(0).max(100),
   categoryScores: z.tuple([
     z.object({
       name: z.literal("Communication Skills"),
-      score: z.number(),
+      score: z.number().min(0).max(100),
       comment: z.string(),
     }),
     z.object({
       name: z.literal("Technical Knowledge"),
-      score: z.number(),
+      score: z.number().min(0).max(100),
       comment: z.string(),
     }),
     z.object({
       name: z.literal("Problem Solving"),
-      score: z.number(),
+      score: z.number().min(0).max(100),
       comment: z.string(),
     }),
     z.object({
       name: z.literal("Cultural Fit"),
-      score: z.number(),
+      score: z.number().min(0).max(100),
       comment: z.string(),
     }),
     z.object({
       name: z.literal("Confidence and Clarity"),
-      score: z.number(),
+      score: z.number().min(0).max(100),
       comment: z.string(),
     }),
   ]),
@@ -202,29 +202,4 @@ export const interviewCovers = [
   "/telegram.png",
   "/tiktok.png",
   "/yahoo.png",
-];
-
-export const dummyInterviews: Interview[] = [
-  {
-    id: "1",
-    userId: "user1",
-    role: "Frontend Developer",
-    type: "Technical",
-    techstack: ["React", "TypeScript", "Next.js", "Tailwind CSS"],
-    level: "Junior",
-    questions: ["What is React?"],
-    finalized: false,
-    createdAt: "2024-03-15T10:00:00Z",
-  },
-  {
-    id: "2",
-    userId: "user1",
-    role: "Full Stack Developer",
-    type: "Mixed",
-    techstack: ["Node.js", "Express", "MongoDB", "React"],
-    level: "Senior",
-    questions: ["What is Node.js?"],
-    finalized: false,
-    createdAt: "2024-03-14T15:30:00Z",
-  },
 ];

@@ -15,27 +15,38 @@ const normalizeTechName = (tech: string) => {
 
 const checkIconExists = async (url: string) => {
   try {
-    const response = await fetch(url, { method: "HEAD" });
-    return response.ok; // Returns true if the icon exists
+    const response = await fetch(url, {
+      method: "HEAD",
+      signal: AbortSignal.timeout(2500),
+      next: { revalidate: 86400 },
+    });
+    return response.ok;
   } catch {
     return false;
   }
 };
 
 export const getTechLogos = async (techArray: string[]) => {
-  const logoURLs = techArray.map((tech) => {
-    const normalized = normalizeTechName(tech);
-    return {
-      tech,
-      url: `${techIconBaseURL}/${normalized}/${normalized}-original.svg`,
-    };
-  });
+  const logoURLs = [
+    ...new Set(techArray.map((tech) => tech.trim()).filter(Boolean)),
+  ]
+    .slice(0, 3)
+    .map((tech) => {
+      const normalized = normalizeTechName(tech);
+      return {
+        tech,
+        url: `${techIconBaseURL}/${normalized}/${normalized}-original.svg`,
+      };
+    });
 
   const results = await Promise.all(
     logoURLs.map(async ({ tech, url }) => ({
       tech,
-      url: (await checkIconExists(url)) ? url : "/tech.svg",
-    }))
+      url:
+        !url.includes("/undefined/") && (await checkIconExists(url))
+          ? url
+          : "/tech.svg",
+    })),
   );
 
   return results;
