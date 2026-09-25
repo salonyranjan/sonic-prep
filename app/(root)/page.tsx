@@ -23,16 +23,31 @@ async function Home() {
 
   let userInterviewsRaw: Interview[] | null = null;
   let allInterviewRaw: Interview[] | null = null;
+  let ownFailed = false;
+  let communityFailed = false;
 
-  try {
-    const [uI, aI] = await Promise.all([
-      user?.id ? getInterviewsByUserId(user.id) : Promise.resolve([]),
-      user?.id ? getLatestInterviews({ userId: user.id }) : Promise.resolve([]),
+  if (user?.id) {
+    const [ownResult, communityResult] = await Promise.allSettled([
+      getInterviewsByUserId(user.id),
+      getLatestInterviews({ userId: user.id }),
     ]);
-    userInterviewsRaw = uI;
-    allInterviewRaw = aI;
-  } catch (error) {
-    console.error("[Home] Failed to fetch interviews:", error);
+    if (ownResult.status === "fulfilled") userInterviewsRaw = ownResult.value;
+    else {
+      ownFailed = true;
+      console.error(
+        "[Home] Failed to fetch your interviews:",
+        ownResult.reason,
+      );
+    }
+    if (communityResult.status === "fulfilled")
+      allInterviewRaw = communityResult.value;
+    else {
+      communityFailed = true;
+      console.error(
+        "[Home] Failed to fetch community interviews:",
+        communityResult.reason,
+      );
+    }
   }
 
   const userInterviews: Interview[] = Array.isArray(userInterviewsRaw)
@@ -114,6 +129,16 @@ async function Home() {
                   }
                 />
               ))
+            ) : ownFailed ? (
+              <div className="col-span-full rounded-2xl border border-amber-400/20 bg-amber-400/5 p-8 text-center">
+                <p className="text-zinc-200">Your interviews could not load.</p>
+                <Link
+                  href="/"
+                  className="mt-3 inline-block text-sm font-semibold text-primary-200 underline underline-offset-4"
+                >
+                  Reload dashboard
+                </Link>
+              </div>
             ) : (
               <div className="col-span-full text-center py-16 bg-zinc-900/40 backdrop-blur-sm rounded-xl border border-zinc-800/60">
                 <p className="text-xl text-zinc-400 font-semibold mb-2">
@@ -165,6 +190,18 @@ async function Home() {
                   }
                 />
               ))
+            ) : communityFailed ? (
+              <div className="col-span-full rounded-2xl border border-amber-400/20 bg-amber-400/5 p-8 text-center">
+                <p className="text-zinc-200">
+                  Community interviews could not load.
+                </p>
+                <Link
+                  href="/"
+                  className="mt-3 inline-block text-sm font-semibold text-primary-200 underline underline-offset-4"
+                >
+                  Reload dashboard
+                </Link>
+              </div>
             ) : (
               <div className="col-span-full text-center py-16 bg-zinc-900/40 backdrop-blur-sm rounded-xl border border-zinc-800/60">
                 <p className="text-xl text-zinc-400 font-semibold mb-2">

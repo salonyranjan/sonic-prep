@@ -157,11 +157,19 @@ const Agent = ({
             if (feedbackStarted.current) return;
             feedbackStarted.current = true;
             void handleGenerateFeedback(messages);
-          }, 0);
+          }, 500);
           return () => clearTimeout(timeout);
         } else {
           router.push("/");
         }
+      } else {
+        const timeout = setTimeout(() => {
+          setError(
+            "No transcript was received. Please try the interview again.",
+          );
+          setCallStatus(CallStatus.ERROR);
+        }, 1200);
+        return () => clearTimeout(timeout);
       }
     }
   }, [
@@ -316,7 +324,7 @@ const Agent = ({
             <button
               disabled={savingFeedback}
               onClick={() =>
-                callStatus === CallStatus.FINISHED
+                callStatus === CallStatus.FINISHED && messages.length > 0
                   ? handleGenerateFeedback(messages)
                   : handleRetry()
               }

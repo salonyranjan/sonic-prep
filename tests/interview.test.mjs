@@ -174,3 +174,60 @@ test("feedback rejects empty, oversized, and malformed transcripts", () => {
     true,
   );
 });
+
+test("community interviews skip the current user and continue to the next page", async () => {
+  const calls = [];
+  const own = Array.from({ length: 50 }, (_, index) => ({
+    id: `own-${index}`,
+    data: () => ({ userId: "demo-user", finalized: true }),
+  }));
+  const other = {
+    id: "community-interview",
+    data: () => ({ userId: "another-user", finalized: true }),
+  };
+  const query = {
+    where(field, operator, value) {
+      calls.push(["where", field, operator, value]);
+      return this;
+    },
+    orderBy(field, direction) {
+      calls.push(["orderBy", field, direction]);
+      return this;
+    },
+    limit(count) {
+      calls.push(["limit", count]);
+      return this;
+    },
+    startAfter(doc) {
+      calls.push(["startAfter", doc.id]);
+      return this;
+    },
+    async get() {
+      return {
+        docs: calls.some((call) => call[0] === "startAfter") ? [other] : own,
+      };
+    },
+  };
+  const { getLatestInterviews } = load("../lib/actions/general.action.ts", {
+    ai: { generateObject() {} },
+    "@ai-sdk/google": { google() {} },
+    "@/firebase/admin": {
+      getAdminServices: () => ({ db: { collection: () => query } }),
+    },
+    "@/constants": { feedbackSchema: {} },
+    "./auth.action": { getCurrentUser: async () => ({ id: "demo-user" }) },
+    "@/lib/validation/interview": validation,
+  });
+
+  const results = await getLatestInterviews({ userId: "demo-user", limit: 1 });
+  assert.equal(results.length, 1);
+  assert.equal(results[0].id, "community-interview");
+  assert.equal(
+    calls.some((call) => call[2] === "!="),
+    false,
+  );
+  assert.equal(
+    calls.some((call) => call[0] === "startAfter"),
+    true,
+  );
+});

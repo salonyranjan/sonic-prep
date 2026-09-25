@@ -5,8 +5,9 @@ import Image from "next/image";
 
 import { Button } from "./ui/button";
 import DisplayTechIcons from "./DisplayTechIcons";
+import BrandLogo from "./BrandLogo";
 
-import { cn, getRandomInterviewCover } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { getFeedbackByInterviewId } from "@/lib/actions/general.action";
 
 const InterviewCard = async ({
@@ -25,14 +26,17 @@ const InterviewCard = async ({
         })
       : null;
 
-  const normalizedType = /mix/gi.test(type) ? "Mixed" : type;
+  const normalizedType = /mix/i.test(type)
+    ? "Mixed"
+    : /behav/i.test(type)
+      ? "Behavioral"
+      : "Technical";
 
-  const badgeColor =
-    {
-      Behavioral: "bg-light-400",
-      Mixed: "bg-light-600",
-      Technical: "bg-light-800",
-    }[normalizedType] || "bg-light-600";
+  const badgeColor = {
+    Behavioral: "border-cyan-400/30 bg-cyan-400/10 text-cyan-200",
+    Mixed: "border-violet-400/30 bg-violet-400/10 text-violet-200",
+    Technical: "border-indigo-400/30 bg-indigo-400/10 text-indigo-200",
+  }[normalizedType];
 
   const date = feedback?.createdAt || createdAt;
   const formattedDate =
@@ -41,43 +45,41 @@ const InterviewCard = async ({
       : "Date unavailable";
 
   return (
-    <div className="card-border !w-full min-w-0 min-h-96">
-      <div className="card-interview">
+    <div className="card-border !w-full min-w-0 min-h-96 transition-transform duration-200 hover:-translate-y-1 focus-within:-translate-y-1">
+      <div className="card-interview border border-white/5">
         <div>
           <div
             className={cn(
-              "absolute top-0 right-0 w-fit px-4 py-2 rounded-bl-lg",
+              "absolute top-5 right-5 rounded-full border px-3 py-1 text-xs font-semibold",
               badgeColor,
             )}
           >
-            <p className="badge-text ">{normalizedType}</p>
+            {normalizedType}
           </div>
-          <Image
-            src={getRandomInterviewCover()}
-            alt="cover-image"
-            width={90}
-            height={90}
-            className="rounded-full object-fit size-[90px]"
-          />
-          <h3 className="mt-5 capitalize">{role} Interview</h3>
+          <div className="flex size-[76px] items-center justify-center rounded-2xl border border-violet-400/20 bg-gradient-to-br from-violet-500/20 to-cyan-500/10 shadow-lg shadow-violet-950/20">
+            <BrandLogo size={52} className="rounded-[14px]" />
+          </div>
+          <h3 className="mt-5 line-clamp-2 capitalize text-white">
+            {role} Interview
+          </h3>
           <div className="flex flex-wrap gap-3 mt-3">
             <div className="flex items-center gap-2 whitespace-nowrap">
               <Image
                 src="/calendar.svg"
                 width={22}
                 height={22}
-                alt="calendar"
+                alt=""
                 className="size-[22px] shrink-0"
               />
               <p>{formattedDate}</p>
             </div>
 
             <div className="flex flex-row gap-2 items-center">
-              <Image src="/star.svg" width={22} height={22} alt="star" />
+              <Image src="/star.svg" width={22} height={22} alt="" />
               <p>{feedback?.totalScore ?? "---"}/100</p>
             </div>
           </div>
-          <p className="line-clamp-2 mt-5">
+          <p className="line-clamp-2 mt-5 text-sm leading-6 text-zinc-300">
             {feedback?.finalAssessment ||
               "You haven't taken this interview yet. Take it now to improve your skills."}
           </p>

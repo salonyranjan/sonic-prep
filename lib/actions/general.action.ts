@@ -144,18 +144,27 @@ export async function getLatestInterviews(
   if (!user || user.id !== userId) return [];
 
   const { db } = getAdminServices();
-  const interviews = await db
+  const pageSize = 50;
+  const requested = Math.max(1, Math.min(50, Math.floor(limit) || 20));
+  const query = db
     .collection("interviews")
-    .orderBy("createdAt", "desc")
     .where("finalized", "==", true)
-    .where("userId", "!=", userId)
-    .limit(Math.max(1, Math.min(50, Math.floor(limit) || 20)))
-    .get();
+    .orderBy("createdAt", "desc")
+    .limit(pageSize);
+  const results: Interview[] = [];
+  let page = await query.get();
 
-  return interviews.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as Interview[];
+  while (page.docs.length > 0) {
+    for (const doc of page.docs) {
+      if (doc.data().userId !== userId)
+        results.push({ id: doc.id, ...doc.data() } as Interview);
+      if (results.length === requested) return results;
+    }
+    if (page.docs.length < pageSize) break;
+    page = await query.startAfter(page.docs[page.docs.length - 1]).get();
+  }
+
+  return results;
 }
 
 export async function getInterviewsByUserId(
