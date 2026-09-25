@@ -17,12 +17,7 @@ import {
   sendPasswordResetEmail,
   signOut as firebaseSignOut,
 } from "firebase/auth";
-import {
-  ArrowRight,
-  Check,
-  LoaderCircle,
-  LockKeyhole,
-} from "lucide-react";
+import { ArrowRight, Check, LoaderCircle, LockKeyhole } from "lucide-react";
 import { Form } from "@/components/ui/form";
 import { signIn, signUp } from "@/lib/actions/auth.action";
 import FormField from "./FormField";
