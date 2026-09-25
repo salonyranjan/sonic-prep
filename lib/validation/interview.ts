@@ -33,6 +33,7 @@ export const interviewRequestSchema = z.object({
     .pipe(z.array(z.string().max(80)).min(1).max(20)),
   amount: z.coerce.number().int().min(1).max(20),
   userid: documentIdSchema,
+  company: z.string().trim().max(80).optional(),
 });
 
 export const feedbackRequestSchema = z.object({
@@ -47,5 +48,6 @@ export const feedbackRequestSchema = z.object({
       }),
     )
     .min(1)
-    .max(300),
+    .max(300)
+    .refine((messages) => messages.some((message) => message.role === "user")),
 });

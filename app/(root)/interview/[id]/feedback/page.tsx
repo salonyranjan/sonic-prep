@@ -25,43 +25,47 @@ const Feedback = async ({ params }: RouteParams) => {
   if (!feedback) redirect(`/interview/${id}`);
 
   return (
-    <section className="mx-auto flex w-full max-w-5xl flex-col gap-8 pb-12 text-white">
+    <section className="mx-auto flex w-full max-w-5xl flex-col gap-8 pb-12 text-foreground dark:text-white">
       <header className="grid gap-6 overflow-hidden rounded-3xl border border-violet-400/20 bg-gradient-to-br from-[#211d3b] via-[#121827] to-[#0d2027] p-6 shadow-2xl shadow-black/20 sm:grid-cols-[1fr_auto] sm:items-center sm:p-9">
         <div>
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-800 dark:text-cyan-300">
             Your interview feedback
           </p>
           <h1 className="max-w-2xl text-3xl font-semibold capitalize tracking-tight sm:text-4xl">
             {interview.role} Interview
           </h1>
-          <p className="mt-3 text-sm text-zinc-300">
+          <p className="mt-3 text-sm text-zinc-700 dark:text-zinc-300">
             {feedback.createdAt && dayjs(feedback.createdAt).isValid()
               ? dayjs(feedback.createdAt).format("MMM D, YYYY · h:mm A")
               : "Date unavailable"}
           </p>
         </div>
         <div className="flex size-32 flex-col items-center justify-center rounded-full border-8 border-cyan-300/60 bg-cyan-300/10 shadow-lg shadow-cyan-500/10">
-          <span className="text-4xl font-bold text-white">
+          <span className="text-4xl font-bold text-foreground dark:text-white">
             {feedback.totalScore}
           </span>
-          <span className="text-xs text-cyan-100">out of 100</span>
+          <span className="text-xs text-cyan-800 dark:text-cyan-100">
+            out of 100
+          </span>
         </div>
       </header>
 
-      <div className="rounded-2xl border border-white/10 bg-zinc-900/70 p-6 sm:p-8">
-        <h2 className="mb-3 text-xl font-semibold text-white">
+      <div className="rounded-2xl border border-border bg-white/90 dark:bg-zinc-900/70 p-6 sm:p-8">
+        <h2 className="mb-3 text-xl font-semibold text-foreground dark:text-white">
           Your assessment
         </h2>
-        <p className="leading-7 text-zinc-300">{feedback.finalAssessment}</p>
+        <p className="leading-7 text-zinc-700 dark:text-zinc-300">
+          {feedback.finalAssessment}
+        </p>
       </div>
 
       <section
-        className="rounded-2xl border border-white/10 bg-zinc-900/70 p-6 sm:p-8"
+        className="rounded-2xl border border-border bg-white/90 dark:bg-zinc-900/70 p-6 sm:p-8"
         aria-labelledby="breakdown-heading"
       >
         <h2
           id="breakdown-heading"
-          className="mb-6 text-xl font-semibold text-white"
+          className="mb-6 text-xl font-semibold text-foreground dark:text-white"
         >
           Score breakdown
         </h2>
@@ -69,10 +73,10 @@ const Feedback = async ({ params }: RouteParams) => {
           {feedback.categoryScores.map((category) => (
             <div key={category.name}>
               <div className="mb-2 flex items-baseline justify-between gap-4">
-                <h3 className="text-base font-semibold text-white">
+                <h3 className="text-base font-semibold text-foreground dark:text-white">
                   {category.name}
                 </h3>
-                <span className="shrink-0 text-sm font-semibold text-cyan-200">
+                <span className="shrink-0 text-sm font-semibold text-cyan-800 dark:text-cyan-200">
                   {category.score}/100
                 </span>
               </div>
@@ -89,7 +93,7 @@ const Feedback = async ({ params }: RouteParams) => {
                   style={{ width: `${category.score}%` }}
                 />
               </div>
-              <p className="mt-2 text-sm leading-6 text-zinc-300">
+              <p className="mt-2 text-sm leading-6 text-zinc-700 dark:text-zinc-300">
                 {category.comment}
               </p>
             </div>
@@ -104,11 +108,11 @@ const Feedback = async ({ params }: RouteParams) => {
         >
           <h2
             id="strengths-heading"
-            className="mb-4 text-xl font-semibold text-emerald-200"
+            className="mb-4 text-xl font-semibold text-emerald-800 dark:text-emerald-200"
           >
             Strengths
           </h2>
-          <ul className="list-disc space-y-3 pl-5 text-sm leading-6 text-zinc-200">
+          <ul className="list-disc space-y-3 pl-5 text-sm leading-6 text-zinc-700 dark:text-zinc-200">
             {feedback.strengths.map((strength, index) => (
               <li key={index}>{strength}</li>
             ))}
@@ -124,7 +128,7 @@ const Feedback = async ({ params }: RouteParams) => {
           >
             Areas to improve
           </h2>
-          <ul className="list-disc space-y-3 pl-5 text-sm leading-6 text-zinc-200">
+          <ul className="list-disc space-y-3 pl-5 text-sm leading-6 text-zinc-700 dark:text-zinc-200">
             {feedback.areasForImprovement.map((area, index) => (
               <li key={index}>{area}</li>
             ))}
@@ -136,7 +140,7 @@ const Feedback = async ({ params }: RouteParams) => {
         <Button
           asChild
           variant="outline"
-          className="min-h-11 flex-1 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
+          className="min-h-11 flex-1 border-white/20 bg-transparent text-foreground dark:text-white hover:bg-white/10 hover:text-foreground dark:text-white"
         >
           <Link href="/">Back to dashboard</Link>
         </Button>

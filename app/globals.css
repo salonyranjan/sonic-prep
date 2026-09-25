@@ -142,7 +142,7 @@
     @apply bg-background text-foreground;
   }
   p {
-    @apply text-light-100;
+    @apply text-foreground;
   }
   h2 {
     @apply text-3xl font-semibold;
@@ -154,7 +154,7 @@
     @apply list-disc list-inside;
   }
   li {
-    @apply text-light-100;
+    @apply text-foreground;
   }
 }
 
@@ -331,6 +331,40 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.light .dark-gradient,
+.light .card-interview {
+  background: linear-gradient(155deg, #ffffff, #f4f5ff);
+}
+.light .border-gradient {
+  background: linear-gradient(155deg, #c7c9e8, #e9eafd);
+}
+.light .blue-gradient-dark {
+  background: linear-gradient(135deg, #eeeaff, #e4f5ff);
+}
+.light .form .label,
+.light .call-view h3 {
+  color: #242447 !important;
+}
+.light .form .input,
+.light .btn-secondary,
+.light .btn-upload {
+  background: #f2f2fa !important;
+  color: #25253e !important;
+}
+.light .form .input::placeholder {
+  color: #60637e !important;
+}
+.light .interview-text,
+.light .transcript-border .transcript p {
+  color: #242447;
+}
+.light .btn-call {
+  color: #102a19;
+}
+.light .card-interview {
+  box-shadow: 0 16px 40px #2222660c;
 }
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { FirebaseError } from "firebase/app";
 import { getFirebaseAuth } from "@/firebase/client";
 import BrandLogo from "@/components/BrandLogo";
+import ThemeToggle from "@/components/ThemeToggle";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -139,17 +140,20 @@ export default function AuthForm({ type }: { type: FormType }) {
 
   return (
     <div className="w-full max-w-6xl">
-      <Link
-        href="/"
-        aria-label="SonicPrep home"
-        className="mb-8 inline-flex items-center gap-3 rounded-lg text-xl font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-primary-200 sm:mb-12"
-      >
-        <BrandLogo size={40} className="rounded-xl" />
-        SonicPrep<span className="sr-only"> home</span>
-      </Link>
+      <div className="flex items-start justify-between gap-4">
+        <Link
+          href="/"
+          aria-label="SonicPrep home"
+          className="mb-8 inline-flex items-center gap-3 rounded-lg text-xl font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-primary-200 sm:mb-12"
+        >
+          <BrandLogo size={40} className="rounded-xl" />
+          SonicPrep<span className="sr-only"> home</span>
+        </Link>
+        <ThemeToggle />
+      </div>
       <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-20">
         <section className="max-w-xl" aria-labelledby="auth-intro">
-          <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary-200/20 bg-primary-200/5 px-3 py-1.5 text-xs font-medium tracking-wide text-primary-100">
+          <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary-200/20 bg-primary-200/5 px-3 py-1.5 text-xs font-medium tracking-wide text-violet-700 dark:text-primary-100">
             <span className="size-1.5 rounded-full bg-primary-200" />
             YOUR NEXT CHAPTER STARTS HERE
           </span>
@@ -159,9 +163,11 @@ export default function AuthForm({ type }: { type: FormType }) {
           >
             A little practice.
             <br />
-            <span className="text-primary-200">A lot more confidence.</span>
+            <span className="text-violet-700 dark:text-primary-200">
+              A lot more confidence.
+            </span>
           </h1>
-          <p className="mt-5 max-w-md text-base leading-7 text-zinc-400 sm:text-lg">
+          <p className="mt-5 max-w-md text-base leading-7 text-zinc-600 dark:text-zinc-400 sm:text-lg">
             Prepare for your next opportunity with realistic AI interviews and
             feedback you can put into practice.
           </p>
@@ -173,11 +179,11 @@ export default function AuthForm({ type }: { type: FormType }) {
             ].map((text) => (
               <div
                 key={text}
-                className="flex items-center gap-3 text-sm text-zinc-300"
+                className="flex items-center gap-3 text-sm text-zinc-700 dark:text-zinc-300"
               >
                 <Check
                   size={17}
-                  className="shrink-0 text-primary-200"
+                  className="shrink-0 text-violet-700 dark:text-primary-200"
                   aria-hidden="true"
                 />
                 {text}
@@ -185,12 +191,12 @@ export default function AuthForm({ type }: { type: FormType }) {
             ))}
           </div>
           <div
-            className="mt-12 hidden max-w-sm rounded-2xl border border-white/10 bg-white/[0.025] p-5 lg:block"
+            className="mt-12 hidden max-w-sm rounded-2xl border border-border bg-card p-5 lg:block"
             aria-hidden="true"
           >
             <div className="flex items-center gap-3">
               <BrandLogo size={24} className="rounded-md" />
-              <span className="text-sm font-medium text-zinc-200">
+              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
                 Space to practice. Room to grow.
               </span>
             </div>
@@ -210,7 +216,7 @@ export default function AuthForm({ type }: { type: FormType }) {
         </section>
         <section
           aria-labelledby="auth-heading"
-          className="min-w-0 rounded-3xl border border-white/10 bg-zinc-900/80 p-6 shadow-2xl shadow-black/20 sm:p-9"
+          className="min-w-0 rounded-3xl border border-border bg-white/90 dark:bg-zinc-900/80 p-6 shadow-2xl shadow-black/20 sm:p-9"
         >
           <div className="mb-7">
             <h2
@@ -219,7 +225,7 @@ export default function AuthForm({ type }: { type: FormType }) {
             >
               {isSignIn ? "Welcome back" : "Create your account"}
             </h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-400">
+            <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
               {isSignIn
                 ? "Sign in to continue your interview practice."
                 : "Start building confidence for your next interview."}
@@ -275,7 +281,7 @@ export default function AuthForm({ type }: { type: FormType }) {
                     <button
                       type="button"
                       onClick={resetPassword}
-                      className="min-h-11 rounded text-sm text-primary-200 hover:text-primary-100 focus-visible:outline-2 focus-visible:outline-primary-200"
+                      className="min-h-11 rounded text-sm text-violet-700 dark:text-primary-200 hover:text-violet-700 dark:text-primary-100 focus-visible:outline-2 focus-visible:outline-primary-200"
                     >
                       {resetting ? "Sending reset link..." : "Forgot password?"}
                     </button>
@@ -284,7 +290,7 @@ export default function AuthForm({ type }: { type: FormType }) {
                 {form.formState.errors.root && (
                   <p
                     role="alert"
-                    className="rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-sm leading-6 text-red-200"
+                    className="rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-sm leading-6 text-red-800 dark:text-red-200"
                   >
                     {form.formState.errors.root.message}
                   </p>
@@ -292,7 +298,7 @@ export default function AuthForm({ type }: { type: FormType }) {
                 {notice && (
                   <p
                     role="status"
-                    className="rounded-xl border border-primary-200/20 bg-primary-200/10 p-3 text-sm leading-6 text-primary-100"
+                    className="rounded-xl border border-primary-200/20 bg-primary-200/10 p-3 text-sm leading-6 text-violet-700 dark:text-primary-100"
                   >
                     {notice}
                   </p>
@@ -320,18 +326,18 @@ export default function AuthForm({ type }: { type: FormType }) {
               </fieldset>
             </form>
           </Form>
-          <p className="mt-7 border-t border-white/10 pt-6 text-center text-sm leading-7 text-zinc-400">
+          <p className="mt-7 border-t border-border pt-6 text-center text-sm leading-7 text-zinc-600 dark:text-zinc-400">
             {isSignIn ? "New to SonicPrep?" : "Already have an account?"}{" "}
             <Link
               href={isSignIn ? "/sign-up" : "/sign-in"}
-              className="inline-block rounded font-medium text-primary-200 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-primary-200"
+              className="inline-block rounded font-medium text-violet-700 dark:text-primary-200 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-primary-200"
             >
               {isSignIn ? "Create an account" : "Sign in"}
             </Link>
           </p>
         </section>
       </div>
-      <footer className="mt-10 flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-500">
+      <footer className="mt-10 flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-600 dark:text-zinc-500">
         <span>© {new Date().getFullYear()} SonicPrep</span>
         <span className="flex items-center gap-1.5">
           <LockKeyhole size={13} aria-hidden="true" />

@@ -38,7 +38,12 @@ const details = {
   userid: "demo-user",
 };
 
-function setup({ secret = "test-secret", exists = true, fail = false } = {}) {
+function setup({
+  secret = "test-secret",
+  exists = true,
+  fail = false,
+  intentCompany,
+} = {}) {
   const writes = [];
   let generations = 0;
   const { POST } = load(
@@ -60,14 +65,26 @@ function setup({ secret = "test-secret", exists = true, fail = false } = {}) {
       "@/firebase/admin": {
         getAdminServices: () => ({
           db: {
-            collection: () => ({
-              doc: () => ({ get: async () => ({ exists }) }),
+            collection: (name) => ({
+              doc: () => ({
+                get: async () => ({
+                  exists,
+                  data: () =>
+                    name === "interviewIntents" && intentCompany
+                      ? { company: intentCompany, startedAt: Date.now() }
+                      : undefined,
+                  ref: { delete: async () => {} },
+                }),
+              }),
               add: async (data) => writes.push(data),
             }),
           },
         }),
       },
-      "@/lib/utils": { getRandomInterviewCover: () => "/covers/adobe.png" },
+      "@/lib/company": {
+        getCompanyLogo: (company) =>
+          company?.toLowerCase() === "adobe" ? "/covers/adobe.png" : null,
+      },
       "@/lib/validation/interview": validation,
     },
     {
@@ -143,6 +160,23 @@ test("generation normalizes input and stores validated questions", async () => {
   assert.equal(app.writes[0].userId, "demo-user");
 });
 
+test("generation stores the selected company and its matching logo", async () => {
+  const app = setup();
+  assert.equal(
+    (await app.POST(request({ ...details, company: "Adobe" }))).status,
+    200,
+  );
+  assert.equal(app.writes[0].company, "Adobe");
+  assert.equal(app.writes[0].coverImage, "/covers/adobe.png");
+});
+
+test("generation uses the company selected before the voice call", async () => {
+  const app = setup({ intentCompany: "Adobe" });
+  assert.equal((await app.POST(request())).status, 200);
+  assert.equal(app.writes[0].company, "Adobe");
+  assert.equal(app.writes[0].coverImage, "/covers/adobe.png");
+});
+
 test("generation does not return private provider errors", async () => {
   const app = setup({ fail: true });
   const response = await app.POST(request());
@@ -159,6 +193,7 @@ test("feedback rejects empty, oversized, and malformed transcripts", () => {
   for (const transcript of [
     [],
     [{ role: "invalid", content: "Hello" }],
+    [{ role: "assistant", content: "Welcome to the interview" }],
     [{ role: "user", content: "x".repeat(8001) }],
   ]) {
     assert.equal(
@@ -176,12 +211,16 @@ test("feedback rejects empty, oversized, and malformed transcripts", () => {
   );
 });
 
-test("community interviews skip the current user and continue to the next page", async () => {
+test("community interviews skip private and own records without a composite index", async () => {
   const calls = [];
-  const own = Array.from({ length: 50 }, (_, index) => ({
+  const own = Array.from({ length: 49 }, (_, index) => ({
     id: `own-${index}`,
     data: () => ({ userId: "demo-user", finalized: true }),
   }));
+  own.push({
+    id: "unfinished",
+    data: () => ({ userId: "another-user", finalized: false }),
+  });
   const other = {
     id: "community-interview",
     data: () => ({ userId: "another-user", finalized: true }),
@@ -226,6 +265,10 @@ test("community interviews skip the current user and continue to the next page",
   assert.equal(results[0].id, "community-interview");
   assert.equal(
     calls.some((call) => call[2] === "!="),
+    false,
+  );
+  assert.equal(
+    calls.some((call) => call[0] === "where"),
     false,
   );
   assert.equal(
@@ -281,6 +324,68 @@ test("an interview attempt is saved even when feedback generation fails", async 
   assert.equal(saved.length, 1);
   assert.equal(saved[0].interviewId, "interview-1");
   assert.equal(saved[0].messageCount, 1);
+});
+
+test("feedback retries update one record and use the required score categories", async () => {
+  const feedbackWrites = [];
+  const prompts = [];
+  const db = {
+    collection(name) {
+      return {
+        doc(id) {
+          if (name === "interviews")
+            return {
+              get: async () => ({
+                exists: true,
+                data: () => ({ userId: "demo-user" }),
+              }),
+            };
+          if (name === "interviewAttempts") return { set: async () => {} };
+          if (name === "feedback")
+            return {
+              id,
+              set: async (data) => feedbackWrites.push({ id, data }),
+            };
+          throw new Error(`Unexpected collection: ${name}`);
+        },
+      };
+    },
+  };
+  const { createFeedback } = load("../lib/actions/general.action.ts", {
+    ai: {
+      generateObject: async ({ prompt }) => {
+        prompts.push(prompt);
+        return {
+          object: {
+            totalScore: 80,
+            categoryScores: [],
+            strengths: [],
+            areasForImprovement: [],
+            finalAssessment: "Good answer",
+          },
+        };
+      },
+    },
+    "@ai-sdk/google": { google: () => "test-model" },
+    "next/cache": { revalidatePath() {} },
+    "@/firebase/admin": { getAdminServices: () => ({ db }) },
+    "@/constants": { feedbackSchema: {} },
+    "./auth.action": { getCurrentUser: async () => ({ id: "demo-user" }) },
+    "@/lib/validation/interview": validation,
+  });
+
+  const params = {
+    interviewId: "interview-1",
+    userId: "demo-user",
+    transcript: [{ role: "user", content: "My answer" }],
+  };
+  assert.equal((await createFeedback(params)).success, true);
+  assert.equal((await createFeedback(params)).success, true);
+  assert.equal(feedbackWrites.length, 2);
+  assert.equal(feedbackWrites[0].id, "demo-user_interview-1");
+  assert.equal(feedbackWrites[1].id, "demo-user_interview-1");
+  assert.ok(prompts[0].includes("Problem Solving"));
+  assert.ok(prompts[0].includes("Confidence and Clarity"));
 });
 
 test("interview history includes completed community interviews and removes duplicates", async () => {
@@ -348,4 +453,162 @@ test("interview history includes completed community interviews and removes dupl
   assert.equal(history[0].id, "community-interview");
   assert.equal(history[0].attempted, true);
   assert.equal(history[1].id, "own-interview");
+});
+
+test("a started practice interview is saved only for an authorized user", async () => {
+  const writes = [];
+  let visible = true;
+  const db = {
+    collection(name) {
+      return {
+        doc(id) {
+          if (name === "interviews")
+            return {
+              get: async () => ({
+                exists: true,
+                data: () => ({ userId: "another-user", finalized: visible }),
+              }),
+            };
+          if (name === "interviewAttempts")
+            return { set: async (data) => writes.push({ id, data }) };
+          throw new Error(`Unexpected collection: ${name}`);
+        },
+      };
+    },
+  };
+  const { saveInterviewAttempt } = load("../lib/actions/general.action.ts", {
+    ai: { generateObject() {} },
+    "@ai-sdk/google": { google() {} },
+    "next/cache": { revalidatePath() {} },
+    "@/firebase/admin": { getAdminServices: () => ({ db }) },
+    "@/constants": { feedbackSchema: {} },
+    "./auth.action": { getCurrentUser: async () => ({ id: "demo-user" }) },
+    "@/lib/validation/interview": validation,
+  });
+
+  assert.equal(
+    (
+      await saveInterviewAttempt({
+        interviewId: "community",
+        userId: "wrong-user",
+      })
+    ).success,
+    false,
+  );
+  visible = false;
+  assert.equal(
+    (
+      await saveInterviewAttempt({
+        interviewId: "community",
+        userId: "demo-user",
+      })
+    ).success,
+    false,
+  );
+  visible = true;
+  assert.equal(
+    (
+      await saveInterviewAttempt({
+        interviewId: "community",
+        userId: "demo-user",
+      })
+    ).success,
+    true,
+  );
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].id, "demo-user_community");
+});
+
+test("feedback lookup returns the user's newest result using a single-field query", async () => {
+  const calls = [];
+  const docs = [
+    {
+      id: "older",
+      data: () => ({ userId: "demo-user", createdAt: "2026-01-01" }),
+    },
+    {
+      id: "someone-else",
+      data: () => ({ userId: "other-user", createdAt: "2026-03-01" }),
+    },
+    {
+      id: "newer",
+      data: () => ({ userId: "demo-user", createdAt: "2026-02-01" }),
+    },
+  ];
+  const db = {
+    collection() {
+      return {
+        where(...args) {
+          calls.push(args);
+          return this;
+        },
+        get: async () => ({ empty: false, docs }),
+      };
+    },
+  };
+  const { getFeedbackByInterviewId } = load(
+    "../lib/actions/general.action.ts",
+    {
+      ai: { generateObject() {} },
+      "@ai-sdk/google": { google() {} },
+      "next/cache": { revalidatePath() {} },
+      "@/firebase/admin": { getAdminServices: () => ({ db }) },
+      "@/constants": { feedbackSchema: {} },
+      "./auth.action": { getCurrentUser: async () => ({ id: "demo-user" }) },
+      "@/lib/validation/interview": validation,
+    },
+  );
+
+  const feedback = await getFeedbackByInterviewId({
+    interviewId: "community",
+    userId: "demo-user",
+  });
+  assert.equal(feedback.id, "newer");
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], "interviewId");
+});
+
+test("generation confirmation finds only interviews saved after the call began", async () => {
+  const start = Date.now() - 5000;
+  const docs = [
+    { data: () => ({ createdAt: new Date(start - 1000).toISOString() }) },
+  ];
+  const db = {
+    collection() {
+      return {
+        where(field, operator, value) {
+          assert.equal(field, "userId");
+          assert.equal(operator, "==");
+          assert.equal(value, "demo-user");
+          return this;
+        },
+        get: async () => ({ docs }),
+      };
+    },
+  };
+  const { beginInterviewGeneration, hasGeneratedInterviewSince } = load(
+    "../lib/actions/general.action.ts",
+    {
+      ai: { generateObject() {} },
+      "@ai-sdk/google": { google() {} },
+      "next/cache": { revalidatePath() {} },
+      "@/firebase/admin": { getAdminServices: () => ({ db }) },
+      "@/constants": { feedbackSchema: {} },
+      "./auth.action": { getCurrentUser: async () => ({ id: "demo-user" }) },
+      "@/lib/validation/interview": validation,
+    },
+  );
+
+  assert.equal(await beginInterviewGeneration("wrong-user"), null);
+  assert.equal(
+    await hasGeneratedInterviewSince({ userId: "demo-user", since: start }),
+    false,
+  );
+  docs.push({
+    data: () => ({ createdAt: new Date(start + 1000).toISOString() }),
+  });
+  assert.equal(
+    await hasGeneratedInterviewSince({ userId: "demo-user", since: start }),
+    true,
+  );
 });

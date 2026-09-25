@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 
 import Agent from "@/components/Agent";
 import BrandLogo from "@/components/BrandLogo";
+import Image from "next/image";
+import { getCompanyLogo } from "@/lib/company";
 
 import {
   getFeedbackByInterviewId,
@@ -30,14 +32,33 @@ const InterviewDetails = async ({ params }: RouteParams) => {
       <div className="flex flex-row gap-4 justify-between">
         <div className="flex flex-row gap-4 items-center max-sm:flex-col">
           <div className="flex flex-row gap-4 items-center">
-            <BrandLogo size={40} className="rounded-xl" />
+            {getCompanyLogo(interview.company) ? (
+              <Image
+                src={getCompanyLogo(interview.company)!}
+                alt={`${interview.company} logo`}
+                width={40}
+                height={40}
+                className="size-10 rounded-xl object-contain"
+              />
+            ) : (
+              <BrandLogo size={40} className="rounded-xl" />
+            )}
             <h3 className="capitalize">{interview.role} Interview</h3>
+            {interview.company && (
+              <span className="text-sm text-muted-foreground">
+                at {interview.company}
+              </span>
+            )}
           </div>
 
-          <DisplayTechIcons techStack={interview.techstack} />
+          <DisplayTechIcons
+            techStack={
+              Array.isArray(interview.techstack) ? interview.techstack : []
+            }
+          />
         </div>
 
-        <p className="bg-dark-200 px-4 py-2 rounded-lg h-fit">
+        <p className="bg-slate-100 dark:bg-dark-200 px-4 py-2 rounded-lg h-fit">
           {interview.type}
         </p>
       </div>

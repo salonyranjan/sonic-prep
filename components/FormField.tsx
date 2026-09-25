@@ -39,7 +39,7 @@ export default function FormField<T extends FieldValues>({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="text-sm font-medium text-zinc-200">
+          <FormLabel className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
             {label}
           </FormLabel>
           <div className="relative">
@@ -53,7 +53,7 @@ export default function FormField<T extends FieldValues>({
                 spellCheck={
                   type === "email" || type === "password" ? false : undefined
                 }
-                className="h-12 rounded-xl border-white/15 bg-zinc-950/60 px-4 pr-12 text-base text-white placeholder:text-zinc-500 focus-visible:border-primary-200 focus-visible:ring-primary-200/25 md:text-base"
+                className="h-12 rounded-xl border-border bg-white/60 dark:bg-zinc-950/60 px-4 pr-12 text-base text-foreground dark:text-white placeholder:text-zinc-600 dark:text-zinc-500 focus-visible:border-primary-200 focus-visible:ring-primary-200/25 md:text-base"
               />
             </FormControl>
             {type === "password" && (
@@ -62,7 +62,7 @@ export default function FormField<T extends FieldValues>({
                 onClick={() => setVisible(!visible)}
                 aria-label={visible ? "Hide password" : "Show password"}
                 aria-pressed={visible}
-                className="absolute right-1 top-1 flex size-10 items-center justify-center rounded-lg text-zinc-400 hover:text-white focus-visible:outline-2 focus-visible:outline-primary-200"
+                className="absolute right-1 top-1 flex size-10 items-center justify-center rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-foreground dark:text-white focus-visible:outline-2 focus-visible:outline-primary-200"
               >
                 {visible ? (
                   <EyeOff size={18} aria-hidden="true" />
@@ -73,7 +73,7 @@ export default function FormField<T extends FieldValues>({
             )}
           </div>
           {description && (
-            <FormDescription className="text-xs text-zinc-400">
+            <FormDescription className="text-xs text-zinc-600 dark:text-zinc-400">
               {description}
             </FormDescription>
           )}

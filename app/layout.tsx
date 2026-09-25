@@ -1,4 +1,4 @@
-import { Toaster } from "sonner";
+import ThemeToaster from "@/components/ThemeToaster";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -17,10 +17,18 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="dark">
-      <body className="min-h-screen bg-zinc-950 font-sans antialiased">
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              'try{if(localStorage.getItem("sonic-theme")==="light"){document.documentElement.classList.remove("dark");document.documentElement.classList.add("light")}}catch(e){}',
+          }}
+        />
+      </head>
+      <body className="min-h-screen bg-background text-foreground font-sans antialiased">
         <main className="relative flex min-h-screen flex-col">{children}</main>
-        <Toaster position="bottom-right" richColors theme="dark" closeButton />
+        <ThemeToaster />
       </body>
     </html>
   );

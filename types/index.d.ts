@@ -9,6 +9,8 @@ export interface Interview {
   type: string;
   finalized: boolean;
   attempted?: boolean;
+  company?: string;
+  coverImage?: string | null;
 }
 
 export interface Feedback {
@@ -40,6 +42,7 @@ export interface InterviewCardProps {
   techstack: string[];
   createdAt?: string;
   attempted?: boolean;
+  company?: string;
 }
 
 export interface TechIconProps {

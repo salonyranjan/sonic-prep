@@ -28,7 +28,12 @@ const checkIconExists = async (url: string) => {
 
 export const getTechLogos = async (techArray: string[]) => {
   const logoURLs = [
-    ...new Set(techArray.map((tech) => tech.trim()).filter(Boolean)),
+    ...new Set(
+      (Array.isArray(techArray) ? techArray : [])
+        .filter((tech): tech is string => typeof tech === "string")
+        .map((tech) => tech.trim())
+        .filter(Boolean),
+    ),
   ]
     .slice(0, 3)
     .map((tech) => {
