@@ -2,6 +2,7 @@
 
 import { generateObject } from "ai";
 import { google } from "@ai-sdk/google";
+import { revalidatePath } from "next/cache";
 
 import { getAdminServices } from "@/firebase/admin";
 import { feedbackSchema } from "@/constants";
@@ -43,6 +44,16 @@ export async function createFeedback(params: CreateFeedbackParams) {
       )
         return { success: false };
     }
+    await db
+      .collection("interviewAttempts")
+      .doc(`${userId}_${interviewId}`)
+      .set({
+        interviewId,
+        userId,
+        messageCount: transcript.length,
+        createdAt: new Date().toISOString(),
+      });
+    revalidatePath("/");
     const formattedTranscript = transcript
       .map(
         (sentence: { role: string; content: string }) =>
@@ -89,6 +100,8 @@ export async function createFeedback(params: CreateFeedbackParams) {
     }
 
     await feedbackRef.set(feedback);
+    revalidatePath("/");
+    revalidatePath(`/interview/${interviewId}/feedback`);
 
     return { success: true, feedbackId: feedbackRef.id };
   } catch (error) {
@@ -173,14 +186,50 @@ export async function getInterviewsByUserId(
   const user = await getCurrentUser();
   if (!user || user.id !== userId) return [];
   const { db } = getAdminServices();
-  const interviews = await db
-    .collection("interviews")
-    .where("userId", "==", userId)
-    .orderBy("createdAt", "desc")
-    .get();
+  const [owned, attempts, feedback] = await Promise.all([
+    db.collection("interviews").where("userId", "==", userId).get(),
+    db.collection("interviewAttempts").where("userId", "==", userId).get(),
+    db.collection("feedback").where("userId", "==", userId).get(),
+  ]);
 
-  return interviews.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as Interview[];
+  const history = new Map<string, Interview>();
+  const lastActivity = new Map<string, number>();
+  for (const doc of owned.docs) {
+    const interview = { id: doc.id, ...doc.data() } as Interview;
+    history.set(doc.id, interview);
+    lastActivity.set(doc.id, Date.parse(interview.createdAt) || 0);
+  }
+
+  const practicedIds = new Set<string>();
+  for (const doc of [...attempts.docs, ...feedback.docs]) {
+    const data = doc.data();
+    if (!documentIdSchema.safeParse(data.interviewId).success) continue;
+    practicedIds.add(data.interviewId);
+    const date = Date.parse(data.createdAt) || 0;
+    lastActivity.set(
+      data.interviewId,
+      Math.max(lastActivity.get(data.interviewId) || 0, date),
+    );
+  }
+
+  const missingIds = [...practicedIds].filter((id) => !history.has(id));
+  if (missingIds.length) {
+    const docs = await db.getAll(
+      ...missingIds.map((id) => db.collection("interviews").doc(id)),
+    );
+    for (const doc of docs) {
+      if (doc.exists && doc.data()?.finalized) {
+        history.set(doc.id, { id: doc.id, ...doc.data() } as Interview);
+      }
+    }
+  }
+
+  return [...history.values()]
+    .map((interview) => ({
+      ...interview,
+      attempted: practicedIds.has(interview.id),
+    }))
+    .sort(
+      (a, b) => (lastActivity.get(b.id) || 0) - (lastActivity.get(a.id) || 0),
+    );
 }

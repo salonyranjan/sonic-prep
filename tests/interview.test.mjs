@@ -55,6 +55,7 @@ function setup({ secret = "test-secret", exists = true, fail = false } = {}) {
         },
       },
       "@ai-sdk/google": { google: () => "test-model" },
+      "next/cache": { revalidatePath() {} },
       zod: { z },
       "@/firebase/admin": {
         getAdminServices: () => ({
@@ -211,6 +212,7 @@ test("community interviews skip the current user and continue to the next page",
   const { getLatestInterviews } = load("../lib/actions/general.action.ts", {
     ai: { generateObject() {} },
     "@ai-sdk/google": { google() {} },
+    "next/cache": { revalidatePath() {} },
     "@/firebase/admin": {
       getAdminServices: () => ({ db: { collection: () => query } }),
     },
@@ -230,4 +232,120 @@ test("community interviews skip the current user and continue to the next page",
     calls.some((call) => call[0] === "startAfter"),
     true,
   );
+});
+
+test("an interview attempt is saved even when feedback generation fails", async () => {
+  const saved = [];
+  const db = {
+    collection(name) {
+      return {
+        doc() {
+          if (name === "interviews")
+            return {
+              get: async () => ({
+                exists: true,
+                data: () => ({ userId: "demo-user" }),
+              }),
+            };
+          if (name === "interviewAttempts")
+            return { set: async (data) => saved.push(data) };
+          throw new Error(`Unexpected collection: ${name}`);
+        },
+      };
+    },
+  };
+  const { createFeedback } = load(
+    "../lib/actions/general.action.ts",
+    {
+      ai: {
+        generateObject: async () => {
+          throw new Error("AI unavailable");
+        },
+      },
+      "@ai-sdk/google": { google: () => "test-model" },
+      "next/cache": { revalidatePath() {} },
+      "@/firebase/admin": { getAdminServices: () => ({ db }) },
+      "@/constants": { feedbackSchema: {} },
+      "./auth.action": { getCurrentUser: async () => ({ id: "demo-user" }) },
+      "@/lib/validation/interview": validation,
+    },
+    { console: { error() {} } },
+  );
+
+  const result = await createFeedback({
+    interviewId: "interview-1",
+    userId: "demo-user",
+    transcript: [{ role: "user", content: "My answer" }],
+  });
+  assert.equal(result.success, false);
+  assert.equal(saved.length, 1);
+  assert.equal(saved[0].interviewId, "interview-1");
+  assert.equal(saved[0].messageCount, 1);
+});
+
+test("interview history includes completed community interviews and removes duplicates", async () => {
+  const own = {
+    id: "own-interview",
+    data: () => ({ userId: "demo-user", createdAt: "2026-01-01T00:00:00Z" }),
+  };
+  const attempt = {
+    data: () => ({
+      interviewId: "community-interview",
+      createdAt: "2026-02-01T00:00:00Z",
+    }),
+  };
+  const feedback = {
+    data: () => ({
+      interviewId: "community-interview",
+      createdAt: "2026-02-01T00:01:00Z",
+    }),
+  };
+  const db = {
+    collection(name) {
+      return {
+        where() {
+          return this;
+        },
+        async get() {
+          return {
+            docs:
+              name === "interviews"
+                ? [own]
+                : name === "interviewAttempts"
+                  ? [attempt]
+                  : [feedback],
+          };
+        },
+        doc(id) {
+          return { id };
+        },
+      };
+    },
+    async getAll(...refs) {
+      return refs.map((ref) => ({
+        id: ref.id,
+        exists: true,
+        data: () => ({
+          userId: "another-user",
+          finalized: true,
+          createdAt: "2025-01-01T00:00:00Z",
+        }),
+      }));
+    },
+  };
+  const { getInterviewsByUserId } = load("../lib/actions/general.action.ts", {
+    ai: { generateObject() {} },
+    "@ai-sdk/google": { google() {} },
+    "next/cache": { revalidatePath() {} },
+    "@/firebase/admin": { getAdminServices: () => ({ db }) },
+    "@/constants": { feedbackSchema: {} },
+    "./auth.action": { getCurrentUser: async () => ({ id: "demo-user" }) },
+    "@/lib/validation/interview": validation,
+  });
+
+  const history = await getInterviewsByUserId("demo-user");
+  assert.equal(history.length, 2);
+  assert.equal(history[0].id, "community-interview");
+  assert.equal(history[0].attempted, true);
+  assert.equal(history[1].id, "own-interview");
 });

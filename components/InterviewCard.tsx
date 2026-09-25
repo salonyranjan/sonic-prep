@@ -17,6 +17,7 @@ const InterviewCard = async ({
   type,
   techstack,
   createdAt,
+  attempted,
 }: InterviewCardProps) => {
   const feedback =
     userId && interviewId
@@ -81,7 +82,9 @@ const InterviewCard = async ({
           </div>
           <p className="line-clamp-2 mt-5 text-sm leading-6 text-zinc-300">
             {feedback?.finalAssessment ||
-              "You haven't taken this interview yet. Take it now to improve your skills."}
+              (attempted
+                ? "Your interview was saved. Feedback is not available yet; you can retake it anytime."
+                : "You haven't taken this interview yet. Take it now to improve your skills.")}
           </p>
         </div>
 
@@ -96,7 +99,11 @@ const InterviewCard = async ({
                   : `/interview/${interviewId}`
               }
             >
-              {feedback ? "Check Feedback" : "View Interview"}
+              {feedback
+                ? "Check Feedback"
+                : attempted
+                  ? "Retake Interview"
+                  : "View Interview"}
             </Link>
           </Button>
         </div>

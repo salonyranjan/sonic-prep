@@ -17,6 +17,7 @@ type Interview = {
   type: string;
   techstack: string[];
   createdAt: Date | string;
+  attempted?: boolean;
 };
 async function Home() {
   const user = await getCurrentUser();
@@ -122,6 +123,7 @@ async function Home() {
                   role={interview.role}
                   type={interview.type}
                   techstack={interview.techstack}
+                  attempted={interview.attempted}
                   createdAt={
                     typeof interview.createdAt === "string"
                       ? interview.createdAt

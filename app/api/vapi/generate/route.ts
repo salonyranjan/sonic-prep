@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { generateObject } from "ai";
 import { google } from "@ai-sdk/google";
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
 
 import { getAdminServices } from "@/firebase/admin";
 import { getRandomInterviewCover } from "@/lib/utils";
@@ -81,6 +82,7 @@ export async function POST(request: Request) {
       coverImage: getRandomInterviewCover(),
       createdAt: new Date().toISOString(),
     });
+    revalidatePath("/");
     return Response.json({ success: true });
   } catch (error) {
     console.error("Interview generation failed:", error);
