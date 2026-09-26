@@ -68,6 +68,7 @@ const Agent = ({
     "idle" | "saving" | "saved" | "error"
   >("idle");
   const feedbackStarted = useRef(false);
+  const transcriptMissing = useRef(false);
   const generationStartedAt = useRef<number | null>(null);
 
   const saveAttempt = useCallback(async () => {
@@ -110,6 +111,10 @@ const Agent = ({
           content: message.transcript,
         };
         setMessages((prev) => [...prev, newMessage]);
+        if (message.role === "user" && transcriptMissing.current) {
+          transcriptMissing.current = false;
+          setCallStatus(CallStatus.FINISHED);
+        }
       }
     };
 
@@ -117,6 +122,7 @@ const Agent = ({
     const onSpeechEnd = () => setIsSpeaking(false);
 
     const onError = (error: unknown) => {
+      transcriptMissing.current = false;
       console.error("Vapi Error:", error);
       setError(
         error instanceof Error
@@ -191,7 +197,7 @@ const Agent = ({
             setSavingGeneration(false);
             return;
           }
-          for (let attempt = 0; attempt < 15; attempt++) {
+          for (let attempt = 0; attempt < 40; attempt++) {
             try {
               const saved = await hasGeneratedInterviewSince({
                 userId,
@@ -232,11 +238,12 @@ const Agent = ({
         }
       } else {
         const timeout = setTimeout(() => {
+          transcriptMissing.current = true;
           setError(
             "No answer transcript was received, so feedback is unavailable. You can try the interview again.",
           );
           setCallStatus(CallStatus.ERROR);
-        }, 1500);
+        }, 5000);
         return () => clearTimeout(timeout);
       }
     }
@@ -251,6 +258,7 @@ const Agent = ({
   ]);
   const handleCall = useCallback(async () => {
     feedbackStarted.current = false;
+    transcriptMissing.current = false;
     setAttemptSaveStatus("idle");
     setSavingGeneration(false);
     setGenerationSaveUnconfirmed(false);
@@ -294,6 +302,7 @@ const Agent = ({
 
   const handleDisconnect = useCallback(() => vapi?.stop(), [vapi]);
   const handleRetry = useCallback(() => {
+    transcriptMissing.current = false;
     setCallStatus(CallStatus.INACTIVE);
     setError(null);
     setMessages([]);
@@ -366,7 +375,7 @@ const Agent = ({
               priority
             />
           </div>
-          <h3 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+          <h3 className="text-2xl font-bold bg-gradient-to-r from-cyan-800 to-blue-800 dark:from-cyan-400 dark:to-blue-400 bg-clip-text text-transparent">
             {userName}
           </h3>
         </div>

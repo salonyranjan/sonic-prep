@@ -2,7 +2,7 @@
 
 ## Automated checks
 
-- `npm run check`: lint, TypeScript, and 14 regression tests.
+- `npm run check`: lint, TypeScript, and regression tests.
 - `npm run format:check`: consistent formatting.
 - `npm run build`: production compilation without private service credentials.
 - GitHub Actions runs these checks on pushes to `main` and pull requests using Node.js 24.
@@ -11,7 +11,7 @@ Tests use mocked Firebase, AI providers, and cookies. They cover authentication 
 
 ## Browser checks
 
-The production build was checked in headless Microsoft Edge at 320, 390, 768, and 1440 px widths. Both authentication pages passed overflow, empty-field validation, first-invalid-field focus, and password visibility checks. Protected routes redirected to sign-in, the unconfigured generation endpoint returned HTTP 503, and no browser runtime exceptions were observed.
+The sign-in and sign-up pages were checked in headless Chrome at 320, 390, and 1440 px widths in both themes. Their document widths stayed within the viewport, and the theme control was present. The 390 px light sign-in page was also captured and visually reviewed. Protected interview and dashboard screens still require a configured account for browser inspection.
 
 ## Service setup
 
@@ -19,7 +19,7 @@ Copy `.env.example` to `.env.local` and supply Firebase, Gemini, and Vapi config
 
 Configure the Vapi generation request to send `Authorization: Bearer <VAPI_WEBHOOK_SECRET>`. The value must match the server's private environment variable. Unauthenticated requests are rejected; missing server configuration returns HTTP 503. Do not expose this secret through a `NEXT_PUBLIC_` variable.
 
-Firestore may request composite indexes for the dashboard's user/date and finalized/user/date queries. Create the indexes using the links reported by your configured Firestore project.
+The dashboard queries use single fields so they do not require a composite index. If Firestore reports an index error after a query changes, create the index indicated by that error.
 
 ## Manual acceptance checks
 

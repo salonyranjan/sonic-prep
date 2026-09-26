@@ -26,7 +26,7 @@ const Feedback = async ({ params }: RouteParams) => {
 
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-col gap-8 pb-12 text-foreground dark:text-white">
-      <header className="grid gap-6 overflow-hidden rounded-3xl border border-violet-400/20 bg-gradient-to-br from-[#211d3b] via-[#121827] to-[#0d2027] p-6 shadow-2xl shadow-black/20 sm:grid-cols-[1fr_auto] sm:items-center sm:p-9">
+      <header className="grid gap-6 overflow-hidden rounded-3xl border border-violet-400/20 bg-gradient-to-br from-violet-100 via-white to-cyan-100 dark:from-[#211d3b] dark:via-[#121827] dark:to-[#0d2027] p-6 shadow-2xl shadow-black/20 sm:grid-cols-[1fr_auto] sm:items-center sm:p-9">
         <div>
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-800 dark:text-cyan-300">
             Your interview feedback
@@ -81,7 +81,7 @@ const Feedback = async ({ params }: RouteParams) => {
                 </span>
               </div>
               <div
-                className="h-2 overflow-hidden rounded-full bg-white/10"
+                className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-white/10"
                 role="meter"
                 aria-label={category.name}
                 aria-valuemin={0}
@@ -124,7 +124,7 @@ const Feedback = async ({ params }: RouteParams) => {
         >
           <h2
             id="improvements-heading"
-            className="mb-4 text-xl font-semibold text-amber-200"
+            className="mb-4 text-xl font-semibold text-amber-800 dark:text-amber-200"
           >
             Areas to improve
           </h2>

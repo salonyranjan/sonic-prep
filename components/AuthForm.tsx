@@ -139,7 +139,7 @@ export default function AuthForm({ type }: { type: FormType }) {
   }
 
   return (
-    <div className="w-full max-w-6xl">
+    <div className="min-w-0 w-full max-w-6xl">
       <div className="flex items-start justify-between gap-4">
         <Link
           href="/"
@@ -151,8 +151,8 @@ export default function AuthForm({ type }: { type: FormType }) {
         </Link>
         <ThemeToggle />
       </div>
-      <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-20">
-        <section className="max-w-xl" aria-labelledby="auth-intro">
+      <div className="grid min-w-0 grid-cols-1 items-center gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-20">
+        <section className="min-w-0 max-w-xl" aria-labelledby="auth-intro">
           <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary-200/20 bg-primary-200/5 px-3 py-1.5 text-xs font-medium tracking-wide text-violet-700 dark:text-primary-100">
             <span className="size-1.5 rounded-full bg-primary-200" />
             YOUR NEXT CHAPTER STARTS HERE

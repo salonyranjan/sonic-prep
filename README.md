@@ -17,7 +17,7 @@ SonicPrep is an AI interview practice app with voice conversations, role-specifi
 - **Voice practice:** conversations with an AI interviewer through Vapi, with an on-screen transcript.
 - **Feedback:** an overall score, category breakdowns, strengths, and suggested improvements based on the conversation transcript.
 - **Dashboard:** revisit your interviews and explore community interviews.
-- **Responsive interface:** dark styling, clear form validation, and layouts for desktop and mobile.
+- **Responsive interface:** light and dark modes, clear form validation, and layouts for desktop and mobile.
 
 ## Product tour
 
