@@ -45,6 +45,9 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
+  "overrides": {
+    "jose": "5.10.0"
+  },
   "engines": {
     "node": "^22.13.0 || >=24.0.0"
   }
