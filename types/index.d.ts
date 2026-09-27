@@ -26,6 +26,7 @@ export interface Feedback {
   areasForImprovement: string[];
   finalAssessment: string;
   createdAt: string;
+  generatedFromFallback?: boolean;
 }
 
 export interface User {

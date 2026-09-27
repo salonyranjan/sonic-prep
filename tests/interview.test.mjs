@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import vm from "node:vm";
 import { timingSafeEqual } from "node:crypto";
 import ts from "typescript";
@@ -29,6 +29,7 @@ function load(file, imports, globals = {}) {
 }
 
 const validation = load("../lib/validation/interview.ts", { zod: { z } });
+const companies = load("../lib/company.ts", {});
 const details = {
   type: "Technical",
   role: "Frontend Developer",
@@ -95,6 +96,16 @@ function request(body = details, authorization = "Bearer test-secret") {
     body: typeof body === "string" ? body : JSON.stringify(body),
   });
 }
+
+test("every company choice has a matching cover image", () => {
+  const coverNames = readdirSync(new URL("../public/covers/", import.meta.url))
+    .filter((name) => name.endsWith(".png"))
+    .map((name) => name.replace(/\.png$/, ""))
+    .sort();
+  assert.deepEqual(Array.from(companies.companyOptions).sort(), coverNames);
+  for (const company of companies.companyOptions)
+    assert.equal(companies.getCompanyLogo(company), `/covers/${company}.png`);
+});
 
 test("generation rejects missing or incorrect authorization before spending API credits", async () => {
   const app = setup();
@@ -172,12 +183,11 @@ test("generation does not return private provider errors", async () => {
   assert.equal(app.writes.length, 0);
 });
 
-test("feedback rejects empty, oversized, and malformed transcripts", () => {
+test("feedback accepts a completed session without a candidate transcript", () => {
   const base = { userId: "demo-user", interviewId: "frontend" };
   for (const transcript of [
     [],
     [{ role: "invalid", content: "Hello" }],
-    [{ role: "assistant", content: "Welcome to the interview" }],
     [{ role: "user", content: "x".repeat(8001) }],
   ]) {
     assert.equal(
@@ -190,6 +200,13 @@ test("feedback rejects empty, oversized, and malformed transcripts", () => {
     validation.feedbackRequestSchema.safeParse({
       ...base,
       transcript: [{ role: "user", content: "My answer" }],
+    }).success,
+    true,
+  );
+  assert.equal(
+    validation.feedbackRequestSchema.safeParse({
+      ...base,
+      transcript: [{ role: "assistant", content: "Welcome to the interview" }],
     }).success,
     true,
   );
@@ -261,8 +278,9 @@ test("community interviews skip private and own records without a composite inde
   );
 });
 
-test("an interview attempt is saved even when feedback generation fails", async () => {
+test("a fallback report is saved when feedback generation is unavailable", async () => {
   const saved = [];
+  const feedbackWrites = [];
   const db = {
     collection(name) {
       return {
@@ -276,6 +294,11 @@ test("an interview attempt is saved even when feedback generation fails", async 
             };
           if (name === "interviewAttempts")
             return { set: async (data) => saved.push(data) };
+          if (name === "feedback")
+            return {
+              id: "demo-user_interview-1",
+              set: async (data) => feedbackWrites.push(data),
+            };
           throw new Error(`Unexpected collection: ${name}`);
         },
       };
@@ -304,10 +327,12 @@ test("an interview attempt is saved even when feedback generation fails", async 
     userId: "demo-user",
     transcript: [{ role: "user", content: "My answer" }],
   });
-  assert.equal(result.success, false);
+  assert.equal(result.success, true);
   assert.equal(saved.length, 1);
   assert.equal(saved[0].interviewId, "interview-1");
   assert.equal(saved[0].messageCount, 1);
+  assert.equal(feedbackWrites.length, 1);
+  assert.equal(feedbackWrites[0].generatedFromFallback, true);
 });
 
 test("feedback retries update one record and use the required score categories", async () => {

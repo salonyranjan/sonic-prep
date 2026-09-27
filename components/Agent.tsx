@@ -1,7 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  startTransition,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
@@ -13,7 +19,7 @@ import {
   hasGeneratedInterviewSince,
   saveInterviewAttempt,
 } from "@/lib/actions/general.action";
-import { companyOptions } from "@/lib/company";
+import { companyOptions, getCompanyLogo } from "@/lib/company";
 interface AgentProps {
   userName: string;
   userId?: string;
@@ -33,6 +39,18 @@ interface Message {
 interface SavedMessage {
   role: "user" | "system" | "assistant";
   content: string;
+}
+
+function completedTranscript(messages: SavedMessage[]) {
+  return messages.length
+    ? messages
+    : [
+        {
+          role: "system" as const,
+          content:
+            "The interview session completed without a final transcript.",
+        },
+      ];
 }
 
 enum CallStatus {
@@ -94,7 +112,7 @@ const Agent = ({
     const onCallStart = () => {
       setCallStatus(CallStatus.ACTIVE);
       setError(null);
-      void saveAttempt();
+      startTransition(() => void saveAttempt());
     };
 
     const onCallEnd = () => {
@@ -104,12 +122,23 @@ const Agent = ({
     };
 
     const onMessage = (message: Message) => {
-      if (message.type === "transcript" && message.transcriptType === "final") {
+      const content = message.transcript?.trim();
+      if (
+        message.type === "transcript" &&
+        message.transcriptType === "final" &&
+        content
+      ) {
         const newMessage: SavedMessage = {
-          role: message.role,
-          content: message.transcript,
+          role: message.role === "user" ? "user" : "assistant",
+          content: content.slice(0, 8000),
         };
-        setMessages((prev) => [...prev, newMessage]);
+        setMessages((previous) => {
+          const last = previous[previous.length - 1];
+          return last?.role === newMessage.role &&
+            last.content === newMessage.content
+            ? previous
+            : [...previous, newMessage];
+        });
       }
     };
 
@@ -219,23 +248,18 @@ const Agent = ({
         return () => {
           cancelled = true;
         };
-      } else if (messages.some((message) => message.role === "user")) {
-        if (interviewId && userId) {
-          const timeout = setTimeout(() => {
-            if (feedbackStarted.current) return;
-            feedbackStarted.current = true;
-            void handleGenerateFeedback(messages);
-          }, 1500);
-          return () => clearTimeout(timeout);
-        } else {
-          router.push("/");
-        }
+      } else if (interviewId && userId) {
+        const timeout = setTimeout(() => {
+          if (feedbackStarted.current) return;
+          feedbackStarted.current = true;
+          startTransition(
+            () => void handleGenerateFeedback(completedTranscript(messages)),
+          );
+        }, 1500);
+        return () => clearTimeout(timeout);
       } else {
         const timeout = setTimeout(() => {
-          setError(
-            "No answer transcript was received, so feedback is unavailable. You can try the interview again.",
-          );
-          setCallStatus(CallStatus.ERROR);
+          router.push("/");
         }, 1500);
         return () => clearTimeout(timeout);
       }
@@ -422,55 +446,96 @@ const Agent = ({
         </div>
       </div>
       {messages.length > 0 && (
-        <div className="w-full max-w-3xl">
-          <div className="p-4 bg-gradient-to-r from-purple-500/20 to-cyan-500/20 rounded-3xl border border-purple-500/40">
-            <div className="bg-white/95 dark:bg-zinc-950/95 p-8 rounded-3xl max-h-80 overflow-y-auto space-y-4">
-              {messages.map((msg, index) => (
-                <div
-                  key={index}
+        <section
+          aria-label="Interview conversation"
+          className="w-full max-w-2xl overflow-hidden rounded-3xl border border-border bg-card shadow-lg shadow-violet-950/5"
+        >
+          <header className="flex items-center justify-between border-b border-border bg-violet-500/5 px-4 py-3 sm:px-5">
+            <div>
+              <h2 className="text-sm font-semibold text-foreground dark:text-white">
+                Interview conversation
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Final answers are saved with your interview feedback.
+              </p>
+            </div>
+            <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-800 dark:text-emerald-200">
+              Live
+            </span>
+          </header>
+          <div
+            aria-live="polite"
+            className="flex h-[min(46svh,25rem)] flex-col gap-2 overflow-y-auto overscroll-contain bg-[radial-gradient(circle_at_top,#eef2ff,transparent_55%)] p-3 dark:bg-[radial-gradient(circle_at_top,#1f163b,transparent_55%)] sm:p-4"
+          >
+            {messages.map((msg, index) => {
+              const isCandidate = msg.role === "user";
+              const isSystem = msg.role === "system";
+              return (
+                <article
+                  key={`${msg.role}-${index}-${msg.content.slice(0, 24)}`}
                   className={cn(
-                    "p-6 rounded-2xl",
-                    msg.role === "user"
-                      ? "bg-cyan-500/20 ml-auto max-w-lg"
-                      : "bg-purple-500/20",
+                    "max-w-[88%] break-words rounded-2xl px-3 py-2.5 text-sm leading-6 shadow-sm sm:max-w-[76%]",
+                    isCandidate
+                      ? "self-end rounded-br-md bg-violet-700 text-white"
+                      : isSystem
+                        ? "self-center rounded-xl bg-zinc-200/80 text-center text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                        : "self-start rounded-bl-md border border-border bg-white text-foreground dark:bg-zinc-900 dark:text-white",
                   )}
                 >
-                  <span className="text-xs font-bold opacity-50 mb-2 block">
-                    {msg.role.toUpperCase()}
-                  </span>
-                  <p className="text-foreground dark:text-white text-lg">
-                    {msg.content}
-                  </p>
-                </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
+                  <p className="whitespace-pre-wrap">{msg.content}</p>
+                  {!isSystem && (
+                    <p
+                      className={cn(
+                        "mt-1 text-[11px] font-medium",
+                        isCandidate
+                          ? "text-violet-100"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      {isCandidate ? "You" : "Sonic AI"}
+                    </p>
+                  )}
+                </article>
+              );
+            })}
+            <div ref={messagesEndRef} />
           </div>
-        </div>
+        </section>
       )}
       <div className="flex flex-col items-center gap-6 w-full max-w-md pb-20">
         {type === "generate" && callStatus === CallStatus.INACTIVE && (
           <label className="w-full text-sm font-medium text-foreground">
             Company (optional)
-            <input
-              list="company-options"
+            <select
               value={company}
-              maxLength={80}
               onChange={(event) => setCompany(event.target.value)}
-              placeholder="e.g. Amazon"
               className="mt-2 w-full rounded-xl border border-border bg-card px-4 py-3 text-foreground placeholder:text-muted-foreground"
-            />
-            <datalist id="company-options">
+            >
+              <option value="">Choose a company</option>
               {companyOptions.map((option) => (
                 <option
                   key={option}
                   value={option[0].toUpperCase() + option.slice(1)}
                 />
               ))}
-            </datalist>
+            </select>
             <span className="mt-2 block text-xs font-normal text-muted-foreground">
-              Choose a company to show its logo on your saved interview.
+              {company && getCompanyLogo(company)
+                ? "The matching company logo will appear on the saved interview."
+                : "Choose a company to show its logo on your saved interview."}
             </span>
+            {company && getCompanyLogo(company) && (
+              <span className="mt-3 flex items-center gap-3 rounded-xl border border-border bg-muted/40 p-3 text-sm font-medium text-foreground">
+                <Image
+                  src={getCompanyLogo(company)!}
+                  alt={`${company} logo`}
+                  width={32}
+                  height={32}
+                  className="size-8 rounded-lg object-contain"
+                />
+                {company} interview selected
+              </span>
+            )}
           </label>
         )}
         {type === "practice" && attemptSaveStatus !== "idle" && (
@@ -509,11 +574,13 @@ const Agent = ({
               disabled={savingFeedback}
               onClick={() => {
                 if (generationSaveUnconfirmed) router.push("/");
-                else if (
-                  callStatus === CallStatus.FINISHED &&
-                  messages.some((message) => message.role === "user")
-                )
-                  void handleGenerateFeedback(messages);
+                else if (callStatus === CallStatus.FINISHED)
+                  startTransition(
+                    () =>
+                      void handleGenerateFeedback(
+                        completedTranscript(messages),
+                      ),
+                  );
                 else handleRetry();
               }}
               className="mt-2 block min-h-11 underline"

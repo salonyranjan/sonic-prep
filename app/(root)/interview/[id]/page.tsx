@@ -11,6 +11,7 @@ import {
 } from "@/lib/actions/general.action";
 import { getCurrentUser } from "@/lib/actions/auth.action";
 import DisplayTechIcons from "@/components/DisplayTechIcons";
+import { Button } from "@/components/ui/button";
 
 const InterviewDetails = async ({ params }: RouteParams) => {
   const { id } = await params;
@@ -66,6 +67,28 @@ const InterviewDetails = async ({ params }: RouteParams) => {
           {interview.type}
         </p>
       </div>
+
+      {feedback && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-emerald-400/30 bg-emerald-400/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold text-foreground dark:text-white">
+              Your interview report is ready
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Download a professional PDF with your score, improvement plan,
+              technical focus, and mind map.
+            </p>
+          </div>
+          <Button
+            asChild
+            className="shrink-0 bg-violet-700 text-white hover:bg-violet-600"
+          >
+            <a href={`/interview/${id}/feedback/report`} download>
+              Download PDF report
+            </a>
+          </Button>
+        </div>
+      )}
 
       <Agent
         userName={user.name}

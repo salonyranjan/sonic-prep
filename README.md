@@ -22,22 +22,19 @@ Email/password authentication, password reset, community interviews, and light a
 
 ## Product preview
 
-The screenshots use fictional sample data, including an Amazon SEO Specialist interview. Desktop previews use a consistent 800 px display width; mobile previews use 320 px. Select any image to see the full capture. These previews show the interface, not live Firebase, Gemini, or Vapi calls.
+The screenshots use fictional sample data, including an Amazon SEO Specialist interview. Each feature is shown at desktop and mobile sizes. Select an image to see its full capture. These previews show the interface, not live Firebase, Gemini, or Vapi calls.
 
 ### Dashboard
 
-<p align="center"><a href="docs/screenshots/dashboard.png"><img src="docs/screenshots/dashboard.png" alt="Desktop dashboard" width="800" /></a></p>
-<p align="center"><a href="docs/screenshots/mobile-dashboard.png"><img src="docs/screenshots/mobile-dashboard.png" alt="Mobile dashboard" width="320" /></a></p>
+<table align="center"><tr><th>Desktop</th><th>Mobile</th></tr><tr><td align="center"><a href="docs/screenshots/dashboard.png"><img src="docs/screenshots/dashboard.png" alt="Desktop dashboard" width="560" /></a></td><td align="center"><a href="docs/screenshots/mobile-dashboard.png"><img src="docs/screenshots/mobile-dashboard.png" alt="Mobile dashboard" width="240" /></a></td></tr></table>
 
 ### Interview setup and practice
 
-<p align="center"><a href="docs/screenshots/interview-setup.png"><img src="docs/screenshots/interview-setup.png" alt="Interview setup and avatar choice" width="800" /></a></p>
-<p align="center"><a href="docs/screenshots/mobile-interview-practice.png"><img src="docs/screenshots/mobile-interview-practice.png" alt="Amazon interview practice with the selected female avatar" width="320" /></a></p>
+<table align="center"><tr><th>Desktop</th><th>Mobile</th></tr><tr><td align="center"><a href="docs/screenshots/interview-setup.png"><img src="docs/screenshots/interview-setup.png" alt="Interview setup and avatar choice" width="560" /></a></td><td align="center"><a href="docs/screenshots/mobile-interview-practice.png"><img src="docs/screenshots/mobile-interview-practice.png" alt="Amazon interview practice with the selected female avatar" width="240" /></a></td></tr></table>
 
 ### Feedback and report
 
-<p align="center"><a href="docs/screenshots/feedback.png"><img src="docs/screenshots/feedback.png" alt="Desktop interview feedback" width="800" /></a></p>
-<p align="center"><a href="docs/screenshots/mobile-feedback.png"><img src="docs/screenshots/mobile-feedback.png" alt="Mobile interview feedback in light mode" width="320" /></a></p>
+<table align="center"><tr><th>Desktop</th><th>Mobile</th></tr><tr><td align="center"><a href="docs/screenshots/feedback.png"><img src="docs/screenshots/feedback.png" alt="Desktop interview feedback" width="560" /></a></td><td align="center"><a href="docs/screenshots/mobile-feedback.png"><img src="docs/screenshots/mobile-feedback.png" alt="Mobile interview feedback in light mode" width="240" /></a></td></tr></table>
 
 <table align="center">
   <tr><th>Assessment</th><th>Improvement plan</th></tr>

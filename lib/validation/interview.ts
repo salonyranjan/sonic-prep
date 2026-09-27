@@ -48,6 +48,5 @@ export const feedbackRequestSchema = z.object({
       }),
     )
     .min(1)
-    .max(300)
-    .refine((messages) => messages.some((message) => message.role === "user")),
+    .max(300),
 });

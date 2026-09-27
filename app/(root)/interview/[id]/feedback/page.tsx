@@ -55,6 +55,12 @@ const Feedback = async ({ params }: RouteParams) => {
         <p className="leading-7 text-zinc-700 dark:text-zinc-300">
           {feedback.finalAssessment}
         </p>
+        {feedback.generatedFromFallback && (
+          <p className="mt-4 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm leading-6 text-amber-900 dark:text-amber-100">
+            This report is ready to download. Retake the interview with final
+            transcripts enabled for answer-specific AI scoring.
+          </p>
+        )}
       </div>
 
       <section
@@ -139,7 +145,9 @@ const Feedback = async ({ params }: RouteParams) => {
           asChild
           className="min-h-11 flex-1 bg-violet-700 text-white hover:bg-violet-600"
         >
-          <a href={`/interview/${id}/feedback/report`}>Download PDF report</a>
+          <a href={`/interview/${id}/feedback/report`} download>
+            Download PDF report
+          </a>
         </Button>
         <Button
           asChild
