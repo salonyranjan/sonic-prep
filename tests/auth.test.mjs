@@ -60,6 +60,7 @@ function setup({
         return {
           cookies: async () => ({ set: (...args) => cookies.push(args) }),
         };
+      if (name === "react") return { cache: (fn) => fn };
       throw new Error(`Unexpected import ${name}`);
     },
   });

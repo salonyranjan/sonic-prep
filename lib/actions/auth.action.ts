@@ -2,6 +2,7 @@
 
 import { getAdminServices } from "@/firebase/admin";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import type { SignInParams, SignUpParams, User } from "@/types";
 
 const SESSION_DURATION = 60 * 60 * 24 * 7;
@@ -89,7 +90,7 @@ export async function signOut() {
   (await cookies()).delete("session");
 }
 
-export async function getCurrentUser(): Promise<User | null> {
+const readCurrentUser = cache(async (): Promise<User | null> => {
   const sessionCookie = (await cookies()).get("session")?.value;
   if (!sessionCookie) return null;
   try {
@@ -101,6 +102,10 @@ export async function getCurrentUser(): Promise<User | null> {
   } catch {
     return null;
   }
+});
+
+export async function getCurrentUser(): Promise<User | null> {
+  return readCurrentUser();
 }
 
 export async function isAuthenticated() {
