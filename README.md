@@ -22,7 +22,7 @@ Email/password authentication, password reset, community interviews, and light a
 
 ### Optional resume questions
 
-On **Create an interview**, choose a PDF resume (up to 4 MB) before starting the voice setup. SonicPrep summarizes interview-relevant details with the existing Gemini integration, then uses that summary when generating questions. The PDF is not stored. The temporary summary is removed after the interview questions are saved. Remove the file or leave the field empty for a standard interview. This uses the existing `GOOGLE_GENERATIVE_AI_API_KEY`; no extra service or key is needed.
+On **Create an interview**, choose a PDF resume (up to 4 MB) before starting the voice setup. SonicPrep reads the PDF once and extracts detailed experience, projects, skills, and achievements. After the voice setup collects your target role, those details guide the questions in the saved practice interview. Its first question names a detail from the resume. The PDF is not stored; the temporary extracted text is deleted after questions are saved. Remove the file or leave the field empty for a standard interview. This uses the existing `GOOGLE_GENERATIVE_AI_API_KEY`; no extra service or key is needed.
 
 ## Product preview
 

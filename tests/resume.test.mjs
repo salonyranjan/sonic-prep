@@ -46,7 +46,7 @@ function uploadRequest(file = validPdf) {
 function uploadApp({
   user = { id: "candidate" },
   startedAt = Date.now(),
-  summary = "Built a React dashboard.",
+  extractedText = "Built a React dashboard.",
 } = {}) {
   let calls = 0;
   let stored;
@@ -73,10 +73,11 @@ function uploadApp({
   };
   const { POST } = load("../app/api/resume/route.ts", {
     ai: {
-      generateText: async ({ messages }) => {
+      generateText: async ({ messages, system }) => {
         calls++;
         assert.equal(messages[0].content[1].mediaType, "application/pdf");
-        return { text: summary };
+        assert.match(system, /Read every page/);
+        return { text: extractedText };
       },
     },
     "@ai-sdk/google": { google: () => "test-model" },
@@ -111,16 +112,28 @@ test("resume upload rejects invalid and oversized PDFs before using AI", async (
   assert.equal(app.calls(), 0);
 });
 
-test("resume upload stores only a bounded AI summary", async () => {
-  const app = uploadApp({ summary: "Built a React dashboard. ".repeat(300) });
+test("resume upload stores detailed extracted content without shortening it", async () => {
+  const content = "Built a React dashboard. ".repeat(300);
+  const app = uploadApp({ extractedText: content });
   assert.equal((await app.POST(uploadRequest())).status, 200);
   assert.equal(app.calls(), 1);
-  assert.equal(app.stored().resumeSummary.length, 3500);
-  assert.equal(Object.keys(app.stored()).join(","), "resumeSummary");
+  assert.equal(app.stored().resumeText, content.trim());
+  assert.equal(Object.keys(app.stored()).join(","), "resumeText");
 
-  const invalid = uploadApp({ summary: "NOT_A_RESUME" });
+  const invalid = uploadApp({ extractedText: "NOT_A_RESUME" });
   assert.equal((await invalid.POST(uploadRequest())).status, 422);
   assert.equal(invalid.stored(), undefined);
+
+  const tooLong = uploadApp({ extractedText: "x".repeat(32_001) });
+  assert.equal((await tooLong.POST(uploadRequest())).status, 422);
+  assert.equal(tooLong.stored(), undefined);
+});
+
+test("resume upload accepts a PDF when the browser omits its MIME type", async () => {
+  const file = new File(["header\n%PDF-1.7\nresume"], "resume.pdf");
+  const app = uploadApp();
+  assert.equal((await app.POST(uploadRequest(file))).status, 200);
+  assert.equal(app.calls(), 1);
 });
 
 test("generated questions receive resume context only from a recent intent", async () => {
@@ -137,7 +150,7 @@ test("generated questions receive resume context only from a recent intent", asy
         generateObject: async ({ prompt }) => {
           prompts.push(JSON.parse(prompt));
           return {
-            object: { questions: ["Tell me about your React dashboard."] },
+            object: { questions: ["Tell me about yourself."] },
           };
         },
       },
@@ -155,7 +168,8 @@ test("generated questions receive resume context only from a recent intent", asy
                     : {
                         data: () => ({
                           startedAt: Date.now() - age,
-                          resumeSummary: "Built a React dashboard.",
+                          resumeText:
+                            "Built a React dashboard for sales reporting.",
                         }),
                         ref: {
                           delete: async () => {
@@ -192,13 +206,19 @@ test("generated questions receive resume context only from a recent intent", asy
     });
 
   assert.equal((await POST(request())).status, 200);
-  assert.equal(prompts[0].resumeSummary, "Built a React dashboard.");
+  assert.equal(
+    prompts[0].resumeText,
+    "Built a React dashboard for sales reporting.",
+  );
   assert.equal(deleted, 1);
-  assert.equal("resumeSummary" in writes[0], false);
+  assert.equal("resumeText" in writes[0], false);
+  assert.match(writes[0].questions[0], /React dashboard/);
+  assert.match(writes[0].questions[0], /Developer/);
 
   age = 61 * 60 * 1000;
   assert.equal((await POST(request())).status, 200);
-  assert.equal("resumeSummary" in prompts[1], false);
+  assert.equal("resumeText" in prompts[1], false);
+  assert.equal(writes[1].questions[0], "Tell me about yourself.");
 });
 
 test("starting another interview clears the previous resume context", async () => {
@@ -227,5 +247,5 @@ test("starting another interview clears the previous resume context", async () =
 
   assert.equal(typeof (await beginInterviewGeneration("candidate")), "number");
   assert.equal(writes[0].company, null);
-  assert.equal("resumeSummary" in writes[0], false);
+  assert.equal("resumeText" in writes[0], false);
 });

@@ -12,7 +12,9 @@ Tests use mocked Firebase, AI providers, and cookies. They cover authentication 
 
 The resume tests check signed-in access, PDF validation, size limits, AI summarization, temporary Firestore storage, and use of that summary in question generation. They do not make a live Gemini or Vapi call.
 
-For this change, 32 regression tests passed. ESLint, TypeScript, formatting, and the Next.js production build passed. A local production server returned HTTP 200 for sign-in and sign-up, redirected protected pages to sign-in, and rejected an unauthenticated resume upload with HTTP 401.
+For the initial resume feature, 32 regression tests passed. ESLint, TypeScript, formatting, and the Next.js production build passed. A local production server returned HTTP 200 for sign-in and sign-up, redirected protected pages to sign-in, and rejected an unauthenticated resume upload with HTTP 401.
+
+The resume-reading repair adds checks for PDFs with no browser MIME type, detailed extraction without the former 3,500-character summary limit, and a first question grounded in a resume detail. The updated suite has 33 tests.
 
 ## Browser checks
 

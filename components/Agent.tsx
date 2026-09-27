@@ -76,6 +76,9 @@ const Agent = ({
   const [messages, setMessages] = useState<SavedMessage[]>([]);
   const [company, setCompany] = useState("");
   const [resume, setResume] = useState<File | null>(null);
+  const [resumeStatus, setResumeStatus] = useState<
+    "idle" | "reading" | "ready"
+  >("idle");
   const [avatar, setAvatar] = useState<"male" | "female">("male");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -319,6 +322,7 @@ const Agent = ({
     setCallStatus(CallStatus.CONNECTING);
     setMessages([]);
     setError(null);
+    setResumeStatus("idle");
 
     try {
       if (!vapi)
@@ -341,11 +345,15 @@ const Agent = ({
         if (resume) {
           if (
             resume.size > 4 * 1024 * 1024 ||
-            resume.type !== "application/pdf"
+            (resume.type &&
+              !["application/pdf", "application/octet-stream"].includes(
+                resume.type,
+              ))
           )
             throw new Error("Choose a PDF resume smaller than 4 MB.");
           const form = new FormData();
           form.set("resume", resume);
+          setResumeStatus("reading");
           const response = await fetch("/api/resume", {
             method: "POST",
             body: form,
@@ -354,6 +362,7 @@ const Agent = ({
             const result = await response.json();
             throw new Error(result.message || "Could not process your resume.");
           }
+          setResumeStatus("ready");
         }
         await vapi.start(workflowId, {
           variableValues: { username: userName, userid: userId, company },
@@ -367,6 +376,7 @@ const Agent = ({
       }
     } catch (err: unknown) {
       setCallStatus(CallStatus.ERROR);
+      setResumeStatus("idle");
       setError(err instanceof Error ? err.message : "Failed to start call");
     }
   }, [type, userName, userId, questions, vapi, company, resume]);
@@ -616,8 +626,9 @@ const Agent = ({
               </span>
             </label>
             <p className="mt-1 text-sm text-muted-foreground">
-              Add your resume for questions about your own experience. PDF, up
-              to 4 MB.
+              Add your resume for role-specific questions in the practice
+              interview. It is read once before the voice setup. PDF, up to 4
+              MB.
             </p>
             <input
               id="resume-upload"
@@ -642,6 +653,15 @@ const Agent = ({
               </button>
             )}
           </div>
+        )}
+        {type === "generate" && resumeStatus === "ready" && (
+          <p
+            role="status"
+            className="w-full text-center text-sm text-emerald-700 dark:text-emerald-300"
+          >
+            Resume read. Your practice questions will use its details and the
+            role you choose.
+          </p>
         )}
         {type === "practice" && attemptSaveStatus !== "idle" && (
           <div
@@ -714,7 +734,9 @@ const Agent = ({
             className="w-full px-12 py-6 bg-gradient-to-r from-purple-700 to-blue-700 text-white font-bold rounded-3xl shadow-2xl disabled:opacity-50"
           >
             {callStatus === CallStatus.CONNECTING
-              ? "Connecting..."
+              ? resumeStatus === "reading"
+                ? "Reading resume..."
+                : "Connecting..."
               : callStatus === CallStatus.FINISHED
                 ? savingGeneration
                   ? "Saving interview..."
