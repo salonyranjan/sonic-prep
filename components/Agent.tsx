@@ -87,18 +87,46 @@ const Agent = ({
   >("idle");
   const feedbackStarted = useRef(false);
   const generationStartedAt = useRef<number | null>(null);
+  const attemptPersistence = useRef<Promise<boolean> | null>(null);
+  const practiceStarted = useRef(false);
 
   const saveAttempt = useCallback(async () => {
-    if (type !== "practice" || !interviewId || !userId) return;
-    setAttemptSaveStatus("saving");
+    if (type !== "practice" || !interviewId || !userId) return false;
     try {
       const result = await saveInterviewAttempt({ interviewId, userId });
-      setAttemptSaveStatus(result.success ? "saved" : "error");
+      return result.success;
     } catch (error) {
       console.error("Interview save error:", error);
-      setAttemptSaveStatus("error");
+      return false;
     }
   }, [interviewId, type, userId]);
+
+  const persistAttempt = useCallback(async () => {
+    if (type !== "practice" || !interviewId || !userId) return false;
+    if (attemptPersistence.current) return attemptPersistence.current;
+
+    const task = (async () => {
+      setAttemptSaveStatus("saving");
+      for (let retry = 0; retry < 3; retry++) {
+        if (await saveAttempt()) {
+          setAttemptSaveStatus("saved");
+          return true;
+        }
+        if (retry < 2)
+          await new Promise((resolve) =>
+            setTimeout(resolve, 700 * (retry + 1)),
+          );
+      }
+      setAttemptSaveStatus("error");
+      return false;
+    })();
+    attemptPersistence.current = task;
+    try {
+      return await task;
+    } finally {
+      attemptPersistence.current = null;
+    }
+  }, [interviewId, saveAttempt, type, userId]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -110,14 +138,16 @@ const Agent = ({
   useEffect(() => {
     if (!vapi) return;
     const onCallStart = () => {
+      practiceStarted.current = type === "practice";
       setCallStatus(CallStatus.ACTIVE);
       setError(null);
-      startTransition(() => void saveAttempt());
+      startTransition(() => void persistAttempt());
     };
 
     const onCallEnd = () => {
       setCallStatus(CallStatus.FINISHED);
       setIsSpeaking(false);
+      if (type === "practice") startTransition(() => void persistAttempt());
       if (type === "generate") setSavingGeneration(true);
     };
 
@@ -147,6 +177,12 @@ const Agent = ({
 
     const onError = (error: unknown) => {
       console.error("Vapi Error:", error);
+      setIsSpeaking(false);
+      if (practiceStarted.current) {
+        setCallStatus(CallStatus.FINISHED);
+        startTransition(() => void persistAttempt());
+        return;
+      }
       setError(
         error instanceof Error
           ? error.message
@@ -171,7 +207,7 @@ const Agent = ({
       vapi.off("error", onError);
       vapi.stop();
     };
-  }, [saveAttempt, type, vapi]);
+  }, [persistAttempt, type, vapi]);
   const handleGenerateFeedback = useCallback(
     async (msgs: SavedMessage[]) => {
       if (!interviewId || !userId) return;
@@ -275,6 +311,7 @@ const Agent = ({
   ]);
   const handleCall = useCallback(async () => {
     feedbackStarted.current = false;
+    practiceStarted.current = false;
     setAttemptSaveStatus("idle");
     setSavingGeneration(false);
     setGenerationSaveUnconfirmed(false);
@@ -505,17 +542,26 @@ const Agent = ({
       <div className="flex flex-col items-center gap-6 w-full max-w-md pb-20">
         {type === "generate" && callStatus === CallStatus.INACTIVE && (
           <label className="w-full text-sm font-medium text-foreground">
-            Company (optional)
+            <span className="block text-base font-semibold text-foreground">
+              Company interview
+            </span>
+            <span className="mt-1 block text-sm font-normal text-muted-foreground">
+              Choose the company whose cover should appear on this interview.
+            </span>
             <select
               value={company}
               onChange={(event) => setCompany(event.target.value)}
-              className="mt-2 w-full rounded-xl border border-border bg-card px-4 py-3 text-foreground placeholder:text-muted-foreground"
+              aria-label="Company interview"
+              className="mt-3 w-full rounded-xl border border-border bg-background px-4 py-3 font-medium text-foreground shadow-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
             >
-              <option value="">Choose a company</option>
+              <option value="" className="bg-white text-zinc-900">
+                Choose a company
+              </option>
               {companyOptions.map((option) => (
                 <option
                   key={option}
                   value={option[0].toUpperCase() + option.slice(1)}
+                  className="bg-white text-zinc-900"
                 />
               ))}
             </select>
@@ -556,7 +602,7 @@ const Agent = ({
             {attemptSaveStatus === "error" && (
               <button
                 type="button"
-                onClick={() => void saveAttempt()}
+                onClick={() => startTransition(() => void persistAttempt())}
                 className="ml-2 underline underline-offset-4"
               >
                 Retry save
