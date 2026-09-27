@@ -562,7 +562,9 @@ const Agent = ({
                   key={option}
                   value={option[0].toUpperCase() + option.slice(1)}
                   className="bg-white text-zinc-900"
-                />
+                >
+                  {option[0].toUpperCase() + option.slice(1)}
+                </option>
               ))}
             </select>
             <span className="mt-2 block text-xs font-normal text-muted-foreground">
