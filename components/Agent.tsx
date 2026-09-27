@@ -75,6 +75,7 @@ const Agent = ({
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
   const [messages, setMessages] = useState<SavedMessage[]>([]);
   const [company, setCompany] = useState("");
+  const [resume, setResume] = useState<File | null>(null);
   const [avatar, setAvatar] = useState<"male" | "female">("male");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -337,6 +338,23 @@ const Agent = ({
         );
         if (!generationStartedAt.current)
           throw new Error("Please sign in again before starting.");
+        if (resume) {
+          if (
+            resume.size > 4 * 1024 * 1024 ||
+            resume.type !== "application/pdf"
+          )
+            throw new Error("Choose a PDF resume smaller than 4 MB.");
+          const form = new FormData();
+          form.set("resume", resume);
+          const response = await fetch("/api/resume", {
+            method: "POST",
+            body: form,
+          });
+          if (!response.ok) {
+            const result = await response.json();
+            throw new Error(result.message || "Could not process your resume.");
+          }
+        }
         await vapi.start(workflowId, {
           variableValues: { username: userName, userid: userId, company },
         });
@@ -351,7 +369,7 @@ const Agent = ({
       setCallStatus(CallStatus.ERROR);
       setError(err instanceof Error ? err.message : "Failed to start call");
     }
-  }, [type, userName, userId, questions, vapi, company]);
+  }, [type, userName, userId, questions, vapi, company, resume]);
 
   const handleDisconnect = useCallback(() => vapi?.stop(), [vapi]);
   const handleRetry = useCallback(() => {
@@ -585,6 +603,45 @@ const Agent = ({
               </span>
             )}
           </label>
+        )}
+        {type === "generate" && callStatus === CallStatus.INACTIVE && (
+          <div className="w-full rounded-xl border border-border p-4 text-left">
+            <label
+              htmlFor="resume-upload"
+              className="block text-base font-semibold text-foreground"
+            >
+              Resume PDF{" "}
+              <span className="text-sm font-normal text-muted-foreground">
+                (optional)
+              </span>
+            </label>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Add your resume for questions about your own experience. PDF, up
+              to 4 MB.
+            </p>
+            <input
+              id="resume-upload"
+              type="file"
+              accept=".pdf,application/pdf"
+              className="mt-3 block w-full text-sm text-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-violet-600 file:px-3 file:py-2 file:text-white"
+              onChange={(event) => setResume(event.target.files?.[0] ?? null)}
+            />
+            {resume && (
+              <button
+                type="button"
+                className="mt-2 text-sm text-violet-500 underline"
+                onClick={() => {
+                  setResume(null);
+                  const input = document.getElementById(
+                    "resume-upload",
+                  ) as HTMLInputElement | null;
+                  if (input) input.value = "";
+                }}
+              >
+                Remove resume
+              </button>
+            )}
+          </div>
         )}
         {type === "practice" && attemptSaveStatus !== "idle" && (
           <div

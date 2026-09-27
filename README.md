@@ -11,14 +11,18 @@
 
 SonicPrep is a responsive interview practice app. Candidates prepare a role-specific interview, speak with an AI interviewer, and turn feedback into a practical improvement plan.
 
-| Step      | Experience                                                                                                                                                       |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Prepare   | Create an interview for a role, experience level, and technology stack. Company interviews display the matching company cover where available, including Amazon. |
-| Practice  | Choose a male or female candidate avatar before the voice session. Follow the live transcript while speaking with the AI interviewer.                            |
-| Review    | See an overall score, five assessment categories, strengths, specific improvements, and a final assessment. Retake interviews and revisit your history.          |
-| Take away | Download a two-page PDF with the assessment, prioritized next steps, an improvement mind map, and role-specific technical focus.                                 |
+| Step      | Experience                                                                                                                                                                                                                           |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Prepare   | Create an interview for a role, experience level, and technology stack. Optionally upload a PDF resume for questions about your experience. Company interviews display the matching company cover where available, including Amazon. |
+| Practice  | Choose a male or female candidate avatar before the voice session. Follow the live transcript while speaking with the AI interviewer.                                                                                                |
+| Review    | See an overall score, five assessment categories, strengths, specific improvements, and a final assessment. Retake interviews and revisit your history.                                                                              |
+| Take away | Download a two-page PDF with the assessment, prioritized next steps, an improvement mind map, and role-specific technical focus.                                                                                                     |
 
 Email/password authentication, password reset, community interviews, and light and dark themes complete the experience. The interview view keeps SonicPrep branding in the navigation while the selected company cover identifies the session.
+
+### Optional resume questions
+
+On **Create an interview**, choose a PDF resume (up to 4 MB) before starting the voice setup. SonicPrep summarizes interview-relevant details with the existing Gemini integration, then uses that summary when generating questions. The PDF is not stored. The temporary summary is removed after the interview questions are saved. Remove the file or leave the field empty for a standard interview. This uses the existing `GOOGLE_GENERATIVE_AI_API_KEY`; no extra service or key is needed.
 
 ## Product preview
 
@@ -55,6 +59,7 @@ Account access: [desktop sign-in](docs/screenshots/sign-in.png) · [mobile sign-
 | Accounts and data      | Firebase Authentication, Firebase Admin, Firestore                    |
 | Voice                  | Vapi Web SDK                                                          |
 | Questions and feedback | Google Gemini through the AI SDK                                      |
+| Resume PDF processing  | Google Gemini through the same AI SDK and key                         |
 
 ## Run locally
 

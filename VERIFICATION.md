@@ -2,13 +2,17 @@
 
 ## Automated checks
 
-- `npm run check`: lint, TypeScript, and 26 regression tests.
+- `npm run check`: lint, TypeScript, and regression tests, including optional resume upload and question context.
 - `npm run format:check`: consistent formatting.
 - `npm run build`: production compilation without private service credentials.
 - `npm ci`: reproducible installation from the project `package-lock.json`.
 - GitHub Actions runs these checks on pushes to `main` and pull requests using Node.js 24.
 
 Tests use mocked Firebase, AI providers, and cookies. They cover authentication sessions, interview authorization and generation, feedback and attempt saving, company cover selection, and PDF report structure and long-content handling.
+
+The resume tests check signed-in access, PDF validation, size limits, AI summarization, temporary Firestore storage, and use of that summary in question generation. They do not make a live Gemini or Vapi call.
+
+For this change, 32 regression tests passed. ESLint, TypeScript, formatting, and the Next.js production build passed. A local production server returned HTTP 200 for sign-in and sign-up, redirected protected pages to sign-in, and rejected an unauthenticated resume upload with HTTP 401.
 
 ## Browser checks
 
@@ -30,6 +34,7 @@ Configure the Vapi generation request to send `Authorization: Bearer <VAPI_WEBHO
 4. Request a password reset and follow the received email link.
 5. Start and end an interview. Test microphone failures, call cleanup when navigating away, and feedback retry after a failed save.
 6. Check private feedback access, a zero score, missing feedback redirects, and community interviews.
+7. Upload a valid resume PDF, finish voice setup, and confirm at least one saved question refers to its content. Repeat with no file, an invalid file, and an oversized file. Confirm the temporary summary is removed after generation.
 
 Live sign-in, email delivery, voice calls, Firestore data, and Gemini responses still require a configured project. The [documentation screenshots](docs/screenshots/README.md) use sample data and do not verify these integrations.
 

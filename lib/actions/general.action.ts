@@ -130,17 +130,13 @@ export async function beginInterviewGeneration(
   if (user?.id !== userId) return null;
   const startedAt = Date.now();
   const { db } = getAdminServices();
-  if (company?.trim()) {
-    await db
-      .collection("interviewIntents")
-      .doc(userId)
-      .set({
-        company: company.trim().slice(0, 80),
-        startedAt,
-      });
-  } else {
-    await db.collection("interviewIntents").doc(userId).delete();
-  }
+  await db
+    .collection("interviewIntents")
+    .doc(userId)
+    .set({
+      company: company?.trim().slice(0, 80) || null,
+      startedAt,
+    });
   return startedAt;
 }
 
