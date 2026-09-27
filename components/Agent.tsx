@@ -91,6 +91,8 @@ const Agent = ({
   >("idle");
   const feedbackStarted = useRef(false);
   const generationStartedAt = useRef<number | null>(null);
+  const generationCallStarted = useRef(false);
+  const resumeGeneration = useRef(false);
   const attemptPersistence = useRef<Promise<boolean> | null>(null);
   const practiceStarted = useRef(false);
 
@@ -143,12 +145,14 @@ const Agent = ({
     if (!vapi) return;
     const onCallStart = () => {
       practiceStarted.current = type === "practice";
+      generationCallStarted.current = type === "generate";
       setCallStatus(CallStatus.ACTIVE);
       setError(null);
       startTransition(() => void persistAttempt());
     };
 
     const onCallEnd = () => {
+      if (type === "generate" && !generationCallStarted.current) return;
       setCallStatus(CallStatus.FINISHED);
       setIsSpeaking(false);
       if (type === "practice") startTransition(() => void persistAttempt());
@@ -185,6 +189,15 @@ const Agent = ({
       if (practiceStarted.current) {
         setCallStatus(CallStatus.FINISHED);
         startTransition(() => void persistAttempt());
+        return;
+      }
+      if (
+        type === "generate" &&
+        resumeGeneration.current &&
+        generationCallStarted.current
+      ) {
+        setCallStatus(CallStatus.FINISHED);
+        setSavingGeneration(true);
         return;
       }
       setError(
@@ -260,7 +273,11 @@ const Agent = ({
             setSavingGeneration(false);
             return;
           }
-          for (let attempt = 0; attempt < 15; attempt++) {
+          for (
+            let attempt = 0;
+            attempt < (resumeGeneration.current ? 40 : 15);
+            attempt++
+          ) {
             try {
               const saved = await hasGeneratedInterviewSince({
                 userId,
@@ -316,6 +333,8 @@ const Agent = ({
   const handleCall = useCallback(async () => {
     feedbackStarted.current = false;
     practiceStarted.current = false;
+    generationCallStarted.current = false;
+    resumeGeneration.current = false;
     setAttemptSaveStatus("idle");
     setSavingGeneration(false);
     setGenerationSaveUnconfirmed(false);
@@ -363,6 +382,7 @@ const Agent = ({
             throw new Error(result.message || "Could not process your resume.");
           }
           setResumeStatus("ready");
+          resumeGeneration.current = true;
         }
         await vapi.start(workflowId, {
           variableValues: { username: userName, userid: userId, company },

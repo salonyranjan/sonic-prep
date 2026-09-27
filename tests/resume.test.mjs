@@ -140,6 +140,7 @@ test("generated questions receive resume context only from a recent intent", asy
   const validation = load("../lib/validation/interview.ts", { zod: { z } });
   const prompts = [];
   const writes = [];
+  const background = [];
   let age = 0;
   let deleted = 0;
   const { POST } = load(
@@ -156,6 +157,7 @@ test("generated questions receive resume context only from a recent intent", asy
       },
       "@ai-sdk/google": { google: () => "test-model" },
       "next/cache": { revalidatePath() {} },
+      "next/server": { after: (callback) => background.push(callback) },
       zod: { z },
       "@/firebase/admin": {
         getAdminServices: () => ({
@@ -206,6 +208,9 @@ test("generated questions receive resume context only from a recent intent", asy
     });
 
   assert.equal((await POST(request())).status, 200);
+  assert.equal(writes.length, 0);
+  assert.equal(background.length, 1);
+  await background[0]();
   assert.equal(
     prompts[0].resumeText,
     "Built a React dashboard for sales reporting.",

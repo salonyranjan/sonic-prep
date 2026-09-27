@@ -57,6 +57,11 @@ function setup({ secret = "test-secret", exists = true, fail = false } = {}) {
       },
       "@ai-sdk/google": { google: () => "test-model" },
       "next/cache": { revalidatePath() {} },
+      "next/server": {
+        after() {
+          throw new Error("Unexpected background generation without a resume");
+        },
+      },
       zod: { z },
       "@/firebase/admin": {
         getAdminServices: () => ({
