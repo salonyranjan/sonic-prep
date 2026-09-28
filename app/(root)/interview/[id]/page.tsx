@@ -13,6 +13,8 @@ import { getCurrentUser } from "@/lib/actions/auth.action";
 import DisplayTechIcons from "@/components/DisplayTechIcons";
 import { Button } from "@/components/ui/button";
 
+export const maxDuration = 60;
+
 const InterviewDetails = async ({ params }: RouteParams) => {
   const { id } = await params;
 

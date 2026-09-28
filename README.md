@@ -22,7 +22,7 @@ Email/password authentication, password reset, community interviews, and light a
 
 ### Optional resume questions
 
-On **Create an interview**, enter your target role, experience level, skills, interview type, and question count. You can add a PDF resume (up to 4 MB). SonicPrep reads the PDF once and uses its projects, skills, and achievements when generating role-specific questions. The first question names a resume detail. The interview is saved before the app opens voice practice, so a voice connection issue cannot prevent creation. The PDF is not stored; the temporary extracted text is deleted after questions are saved. Leave the resume field empty for a standard interview. This uses the existing `GOOGLE_GENERATIVE_AI_API_KEY`; no extra service or key is needed.
+On **Create an interview**, enter your target role, experience level, skills, interview type, and question count. You can add a PDF resume (up to 4 MB). SonicPrep reads the PDF once and uses its projects, skills, and achievements when generating role-specific questions. The first question names a resume detail. The interview is saved before the app opens voice practice, so a voice connection issue cannot prevent creation. The PDF is not stored; the temporary extracted text is deleted after questions are saved. Retries reuse the extracted resume within the same setup and recover an already saved interview without creating a duplicate. Incomplete extraction is rejected with a clear message. Leave the resume field empty for a standard interview. This uses the existing `GOOGLE_GENERATIVE_AI_API_KEY`; no extra service or key is needed.
 
 ## Product preview
 

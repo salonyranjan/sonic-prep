@@ -238,7 +238,7 @@ const Agent = ({
         } = await createFeedback({
           interviewId,
           userId,
-          transcript: msgs,
+          transcript: msgs.slice(-300),
           feedbackId,
         });
         if (attemptSaved) setAttemptSaveStatus("saved");

@@ -19,6 +19,7 @@ function load(file, imports, globals = {}) {
   const exports = {};
   vm.runInNewContext(source, {
     exports,
+    AbortSignal,
     require: (name) => {
       if (!(name in imports)) throw new Error(`Unexpected import: ${name}`);
       return imports[name];

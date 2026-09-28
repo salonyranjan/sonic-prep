@@ -63,7 +63,7 @@ export async function POST(request: Request) {
         { status: 409 },
       );
 
-    const { text } = await generateText({
+    const { text, finishReason } = await generateText({
       model: google("gemini-2.5-flash"),
       maxOutputTokens: 12_000,
       system:
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
         { message: "We could not read a resume from that PDF." },
         { status: 422 },
       );
-    if (resumeText.length > MAX_RESUME_TEXT_CHARS)
+    if (finishReason === "length" || resumeText.length > MAX_RESUME_TEXT_CHARS)
       return Response.json(
         {
           message:

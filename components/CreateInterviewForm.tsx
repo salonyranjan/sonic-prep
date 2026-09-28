@@ -10,6 +10,7 @@ export default function CreateInterviewForm({ userId }: { userId: string }) {
   const router = useRouter();
   const startedAt = useRef<number | null>(null);
   const busy = useRef(false);
+  const resumeUploadedAt = useRef<number | null>(null);
   const [role, setRole] = useState("");
   const [level, setLevel] = useState("Junior");
   const [type, setType] = useState("mixed");
@@ -43,7 +44,7 @@ export default function CreateInterviewForm({ userId }: { userId: string }) {
           throw new Error("Please sign in again before creating an interview.");
       }
 
-      if (resume) {
+      if (resume && resumeUploadedAt.current !== startedAt.current) {
         setStage("reading");
         const form = new FormData();
         form.set("resume", resume);
@@ -52,8 +53,11 @@ export default function CreateInterviewForm({ userId }: { userId: string }) {
           body: form,
         });
         const result = await upload.json().catch(() => ({}));
-        if (!upload.ok)
+        if (!upload.ok) {
+          if (upload.status === 409) startedAt.current = null;
           throw new Error(result.message || "Could not read your resume.");
+        }
+        resumeUploadedAt.current = startedAt.current;
       }
 
       setStage("creating");
@@ -71,8 +75,10 @@ export default function CreateInterviewForm({ userId }: { userId: string }) {
         }),
       });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok || !result.interviewId)
+      if (!response.ok || !result.interviewId) {
+        if (response.status === 409) startedAt.current = null;
         throw new Error(result.message || "Could not save your interview.");
+      }
       router.push(`/interview/${result.interviewId}`);
       router.refresh();
     } catch (cause) {

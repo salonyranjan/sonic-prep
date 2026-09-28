@@ -175,8 +175,12 @@ export async function POST(request: Request) {
     } catch (error) {
       if (!(await interviewRef.get()).exists) throw error;
     }
-    await intentRef
-      .delete()
+    await db
+      .runTransaction(async (transaction) => {
+        const current = await transaction.get(intentRef);
+        if (current.data()?.startedAt === startedAt)
+          transaction.delete(intentRef);
+      })
       .catch((error) =>
         console.error("Interview intent cleanup failed:", error),
       );

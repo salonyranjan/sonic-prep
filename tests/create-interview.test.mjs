@@ -48,11 +48,23 @@ function setup({
   user = { id: "candidate" },
   failAI = false,
   resumeText = "Built a React dashboard for sales reporting.",
+  changedIntent = false,
 } = {}) {
   const saved = new Map();
   const prompts = [];
   let deleted = 0;
   const db = {
+    runTransaction: async (task) =>
+      task({
+        get: async () => ({
+          data: () => ({
+            startedAt: changedIntent ? startedAt + 1 : startedAt,
+          }),
+        }),
+        delete: () => {
+          deleted++;
+        },
+      }),
     collection(name) {
       return {
         doc(id) {
@@ -154,4 +166,11 @@ test("a standard interview saves without a resume", async () => {
   const { interviewId } = await response.json();
   assert.equal(app.saved.get(interviewId).questions.length, 2);
   assert.match(app.saved.get(interviewId).questions[0], /Frontend Developer/);
+});
+
+test("saving an older interview preserves a newer setup", async () => {
+  const app = setup({ changedIntent: true });
+  assert.equal((await app.POST(request())).status, 200);
+  assert.equal(app.saved.size, 1);
+  assert.equal(app.deleted(), 0);
 });

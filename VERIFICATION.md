@@ -42,10 +42,16 @@ The current creation page saves interviews directly and does not require a Vapi 
 4. Request a password reset and follow the received email link.
 5. Start and end an interview. Test microphone failures, call cleanup when navigating away, and feedback retry after a failed save.
 6. Check private feedback access, a zero score, missing feedback redirects, and community interviews.
-7. Upload a valid resume PDF, finish voice setup, and confirm at least one saved question refers to its content. Repeat with no file, an invalid file, and an oversized file. Confirm the temporary summary is removed after generation.
+7. Upload a valid resume PDF, submit the setup form, and confirm at least one saved question refers to its content. Repeat with no file, an invalid file, and an oversized file. Confirm the temporary summary is removed after generation.
 
 Live sign-in, email delivery, voice calls, Firestore data, and Gemini responses still require a configured project. The [documentation screenshots](docs/screenshots/README.md) use sample data and do not verify these integrations.
 
 ## Dependency audit
 
 The dependency lockfile has been restored for reproducible CI installs. Run a fresh `npm audit` with network access before release; advisory data can change after this local review.
+
+## Final regression audit - September 28, 2026
+
+All 41 automated tests pass. The suite covers authentication, interview creation, resume extraction, feedback persistence, interview history, access controls, and PDF reports with mocked service responses. New regressions exercise lost-save-response retries, expired setup recovery, concurrent setup preservation, and truncated resume rejection. Resume extraction is reused on retries within the same setup. Feedback generation has a 25-second provider timeout so the fallback report can save within the practice page's 60-second budget. Long voice transcripts are capped at the latest 300 messages when submitted to match server validation.
+
+Local verification: automated tests, ESLint, TypeScript, Prettier, and the production build. Live Firebase, Gemini, Vapi voice calls, and account-specific PDF downloads require configured credentials and were not exercised in this audit.

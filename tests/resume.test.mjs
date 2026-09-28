@@ -47,6 +47,7 @@ function uploadApp({
   user = { id: "candidate" },
   startedAt = Date.now(),
   extractedText = "Built a React dashboard.",
+  finishReason = "stop",
 } = {}) {
   let calls = 0;
   let stored;
@@ -77,7 +78,7 @@ function uploadApp({
         calls++;
         assert.equal(messages[0].content[1].mediaType, "application/pdf");
         assert.match(system, /Read every page/);
-        return { text: extractedText };
+        return { text: extractedText, finishReason };
       },
     },
     "@ai-sdk/google": { google: () => "test-model" },
@@ -253,4 +254,10 @@ test("starting another interview clears the previous resume context", async () =
   assert.equal(typeof (await beginInterviewGeneration("candidate")), "number");
   assert.equal(writes[0].company, null);
   assert.equal("resumeText" in writes[0], false);
+});
+
+test("a truncated resume is rejected instead of silently accepted", async () => {
+  const app = uploadApp({ finishReason: "length" });
+  assert.equal((await app.POST(uploadRequest())).status, 422);
+  assert.equal(app.stored(), undefined);
 });
