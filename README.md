@@ -26,15 +26,19 @@ On **Create an interview**, enter your target role, experience level, skills, in
 
 ## Product preview
 
-The screenshots use fictional sample data, including an Amazon SEO Specialist interview. Select an image to see its full capture. The interview setup screenshot shows the earlier voice setup; the current app uses a form and saves the interview before voice practice. These previews do not show live Firebase, Gemini, or Vapi calls.
+The screenshots use fictional sample data, including an Amazon SEO Specialist interview. Select an image to see its full capture. The creation form saves the interview before voice practice begins. These previews do not show live Firebase, Gemini, or Vapi calls.
 
 ### Dashboard
 
 <table align="center"><tr><th>Desktop</th><th>Mobile</th></tr><tr><td align="center"><a href="docs/screenshots/dashboard.png"><img src="docs/screenshots/dashboard.png" alt="Desktop dashboard" width="560" /></a></td><td align="center"><a href="docs/screenshots/mobile-dashboard.png"><img src="docs/screenshots/mobile-dashboard.png" alt="Mobile dashboard" width="240" /></a></td></tr></table>
 
-### Interview setup and practice
+### Create an interview
 
-<table align="center"><tr><th>Desktop</th><th>Mobile</th></tr><tr><td align="center"><a href="docs/screenshots/interview-setup.png"><img src="docs/screenshots/interview-setup.png" alt="Interview setup and avatar choice" width="560" /></a></td><td align="center"><a href="docs/screenshots/mobile-interview-practice.png"><img src="docs/screenshots/mobile-interview-practice.png" alt="Amazon interview practice with the selected female avatar" width="240" /></a></td></tr></table>
+Choose a role, experience level, skills, and question count. Add an optional PDF resume for questions drawn from your experience.
+
+<table align="center"><tr><th>Desktop</th><th>Mobile</th></tr><tr><td align="center" valign="top"><a href="docs/screenshots/create-interview.png"><img src="docs/screenshots/create-interview.png" alt="Desktop Create an interview form with role details and optional PDF resume upload" width="560" /></a></td><td align="center" valign="top"><a href="docs/screenshots/mobile-create-interview.png"><img src="docs/screenshots/mobile-create-interview.png" alt="Mobile Create an interview form with the complete resume upload and save flow" width="240" /></a></td></tr></table>
+
+Continue with [voice practice and a live transcript](docs/screenshots/mobile-interview-practice.png) once the interview is saved.
 
 ### Feedback and report
 
