@@ -18,6 +18,10 @@ The resume-reading repair adds checks for PDFs with no browser MIME type, detail
 
 The voice-workflow repair acknowledges resume-backed generation before starting the slower Gemini and Firestore work. The tests verify that no interview is written before the scheduled work runs and that the ordinary no-resume flow remains synchronous. The client waits for the saved interview after a resume-backed voice call ends or reports a connection event.
 
+The subsequent creation repair removes the voice setup dependency from the interview creation page. The authenticated create endpoint checks role details and the current setup intent, saves the interview before returning its ID, and returns the same ID on a retry. If Gemini question generation fails, it saves role-based fallback questions, including a resume-grounded first question when a resume was uploaded. Voice practice and feedback remain on the saved interview page.
+
+For this repair, 37 regression tests, ESLint, TypeScript, formatting, and the production build passed. A local production server returned HTTP 200 for sign-in, redirected unauthenticated interview setup to sign-in, and rejected unauthenticated interview creation with HTTP 401. Live Firebase, Gemini, and Vapi calls still require configured credentials for end-to-end verification.
+
 ## Browser checks
 
 The current dashboard, interview setup, interview practice, and feedback pages were checked in headless Microsoft Edge at 320, 390, 768, and 1440 px widths using fictional demo data. No horizontal overflow or browser runtime errors were observed. The avatar choice updated the candidate image, and the report endpoint returned a downloadable PDF. Both PDF pages were rendered and visually checked with normal and long sample feedback. Sign-in and sign-up screenshots were captured at desktop and mobile widths in the preceding UI pass.
@@ -28,7 +32,7 @@ The production build was then checked without demo data or service credentials. 
 
 Copy `.env.example` to `.env.local` and supply Firebase, Gemini, and Vapi configuration. Enable Email/Password sign-in in Firebase Authentication and add your app's domain to its authorized domains.
 
-Configure the Vapi generation request to send `Authorization: Bearer <VAPI_WEBHOOK_SECRET>`. The value must match the server's private environment variable. Unauthenticated requests are rejected; missing server configuration returns HTTP 503. Do not expose this secret through a `NEXT_PUBLIC_` variable.
+The current creation page saves interviews directly and does not require a Vapi generation workflow. If the legacy generation webhook remains in use elsewhere, configure it to send `Authorization: Bearer <VAPI_WEBHOOK_SECRET>`. The value must match the server's private environment variable. Unauthenticated requests are rejected; missing server configuration returns HTTP 503. Do not expose this secret through a `NEXT_PUBLIC_` variable.
 
 ## Manual acceptance checks
 

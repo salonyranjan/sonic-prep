@@ -22,11 +22,11 @@ Email/password authentication, password reset, community interviews, and light a
 
 ### Optional resume questions
 
-On **Create an interview**, choose a PDF resume (up to 4 MB) before starting the voice setup. SonicPrep reads the PDF once and extracts detailed experience, projects, skills, and achievements. After the voice setup collects your target role, those details guide the questions in the saved practice interview. Its first question names a detail from the resume. Question generation can continue briefly after the voice setup ends; wait for the interview to appear in **Your Interviews**. The PDF is not stored; the temporary extracted text is deleted after questions are saved. Remove the file or leave the field empty for a standard interview. This uses the existing `GOOGLE_GENERATIVE_AI_API_KEY`; no extra service or key is needed.
+On **Create an interview**, enter your target role, experience level, skills, interview type, and question count. You can add a PDF resume (up to 4 MB). SonicPrep reads the PDF once and uses its projects, skills, and achievements when generating role-specific questions. The first question names a resume detail. The interview is saved before the app opens voice practice, so a voice connection issue cannot prevent creation. The PDF is not stored; the temporary extracted text is deleted after questions are saved. Leave the resume field empty for a standard interview. This uses the existing `GOOGLE_GENERATIVE_AI_API_KEY`; no extra service or key is needed.
 
 ## Product preview
 
-The screenshots use fictional sample data, including an Amazon SEO Specialist interview. Each feature is shown at desktop and mobile sizes. Select an image to see its full capture. These previews show the interface, not live Firebase, Gemini, or Vapi calls.
+The screenshots use fictional sample data, including an Amazon SEO Specialist interview. Select an image to see its full capture. The interview setup screenshot shows the earlier voice setup; the current app uses a form and saves the interview before voice practice. These previews do not show live Firebase, Gemini, or Vapi calls.
 
 ### Dashboard
 
@@ -68,16 +68,16 @@ Use Node.js **22.13+** on the 22.x line or **24+**, and npm. Firebase, Vapi, and
 1. Install dependencies with `npm ci`.
 2. Copy [`.env.example`](.env.example) to `.env.local` and add your credentials:
 
-   | Variable                                                               | Used for                                   |
-   | ---------------------------------------------------------------------- | ------------------------------------------ |
-   | `NEXT_PUBLIC_FIREBASE_*`                                               | Firebase web app                           |
-   | `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | Firebase Admin                             |
-   | `GOOGLE_GENERATIVE_AI_API_KEY`                                         | Gemini                                     |
-   | `NEXT_PUBLIC_VAPI_WEB_TOKEN`, `NEXT_PUBLIC_VAPI_WORKFLOW_ID`           | Voice interview flow                       |
-   | `VAPI_WEBHOOK_SECRET`                                                  | Authenticated interview-generation webhook |
+   | Variable                                                               | Used for                                  |
+   | ---------------------------------------------------------------------- | ----------------------------------------- |
+   | `NEXT_PUBLIC_FIREBASE_*`                                               | Firebase web app                          |
+   | `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | Firebase Admin                            |
+   | `GOOGLE_GENERATIVE_AI_API_KEY`                                         | Gemini                                    |
+   | `NEXT_PUBLIC_VAPI_WEB_TOKEN`                                           | Voice interview practice                  |
+   | `NEXT_PUBLIC_VAPI_WORKFLOW_ID`, `VAPI_WEBHOOK_SECRET`                  | Legacy voice setup webhook, if still used |
 
 3. Enable Email/Password in Firebase Authentication, authorize your domain, and create a Firestore database.
-4. Configure the Vapi generation flow to call `/api/vapi/generate` on your reachable app URL with `Authorization: Bearer <VAPI_WEBHOOK_SECRET>`.
+4. Configure the Vapi web token for voice practice. New interviews are created and saved in the app before the voice call starts; the legacy Vapi generation workflow is no longer required for creation.
 5. Run `npm run dev` and open [localhost:3000](http://localhost:3000). Allow microphone access for voice practice.
 
 Keep `.env.local` private. Production builds do not require live credentials, but connected interview features do.

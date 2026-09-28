@@ -1,4 +1,4 @@
-import Agent from "@/components/Agent";
+import CreateInterviewForm from "@/components/CreateInterviewForm";
 import { getCurrentUser } from "@/lib/actions/auth.action";
 import { redirect } from "next/navigation";
 
@@ -8,7 +8,7 @@ const Page = async () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <Agent userName={user.name} userId={user.id} type="generate" />
+      <CreateInterviewForm userId={user.id} />
     </div>
   );
 };
