@@ -95,8 +95,6 @@ Keep `.env.local` private. Production builds do not require live credentials, bu
 | `npm run build`        | Production compilation                   |
 | `npm start`            | Serve the production build               |
 
-[VERIFICATION.md](VERIFICATION.md) records tested flows and the live-service checks that still need configured credentials.
-
 ## Author and license
 
 Created by **Salony Ranjan** · [GitHub](https://github.com/salonyranjan) · [LinkedIn](https://www.linkedin.com/in/salony-ranjan-b63200280/)
